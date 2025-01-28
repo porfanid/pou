@@ -30,7 +30,7 @@ export async function initializeFirebase() {
         serviceAccount = JSON.parse(secret);
     } catch (error) {
         console.error('Failed to fetch secret, falling back to local file:', error);
-        serviceAccount = require('./heavy-local-admin.json'); // Fallback to local file
+        serviceAccount = (await import('./heavy-local-admin.json')).default;
     }
 
     // Initialize Firebase Admin
