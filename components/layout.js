@@ -1,22 +1,11 @@
-import { Geist, Geist_Mono } from "next/font/google";
-import "../app/globals.css";
-
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
-});
+import Footer from "./footer";
 
 
-export default function RootLayout(children) {
+export default function RootLayout({ children }) {
     return (
-        <>
-        <div style={{ color: 'red', fontSize: '20px' }}>hello</div>
-        {children}
-        </>
+        <div className="min-h-screen flex flex-col bg-background dark:bg-background">
+            <main className="flex-grow flex items-center justify-center">{children}</main>
+            <Footer />
+        </div>
     );
 }

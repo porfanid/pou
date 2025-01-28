@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    font-family: var(--font-body), serif; /* Replace with your desired font variable */
+}
+
+:root {
+    --font-body: "Noto Serif", serif; /* Set your desired font stack */
+}
+
+body {
+    font-kerning: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+
+p{
+    @apply text-text
+}
+
+strong {
+    @apply text-text-bold
+}

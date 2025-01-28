@@ -1,0 +1,75 @@
+/* Το container να καλύπτει ολόκληρη την οθόνη */
+.carousel-container {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Το στοιχείο της εικόνας στο carousel */
+.carousel-item {
+    height: 100%;
+}
+
+.carousel-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover; /* Καλύπτει όλο το container χωρίς να παραμορφώνεται η εικόνα */
+    background-position: center;
+}
+
+/* Ελαφρύ μαύρο overlay πάνω από το carousel */
+.carousel-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4); /* Ελαφρύ μαύρο overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    text-align: center;
+    color: white;
+}
+
+/* Κείμενο στο κέντρο */
+.header-content {
+    z-index: 3;
+    padding: 20px;
+    text-align: center;
+}
+
+.fancy-text {
+    font-size: 4rem;
+    font-family: 'Font-1';
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Προσθέτει μια σκιά στο κείμενο για καλύτερη ευκρίνεια */
+    background: linear-gradient(90deg, #ff0000, #ff6600, #ffff00, #ff6600, #ff0000); /* Gradient colors: κόκκινο -> πορτοκαλί -> κίτρινο -> πορτοκαλί -> κόκκινο */
+    -webkit-background-clip: text; /* Εφαρμόζει το gradient στο κείμενο */
+    color: transparent; /* Κάνει το κείμενο διάφανο για να φαίνεται το gradient */
+    animation: gradient-animation 3s infinite linear;
+}
+
+/* Εφαρμογή του gradient animation */
+@keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@media (max-width: 768px) {
+    .fancy-text {
+        font-size: 2rem;
+    }
+}
+
+@font-face {
+    font-family: 'Font-1';
+    src: url(./../../../assets/Font/old-english-five/OldEnglishFive.ttf);
+}
+
+.font-1 {
+    font-family: 'Font-1';
+    color: whitesmoke;
+}

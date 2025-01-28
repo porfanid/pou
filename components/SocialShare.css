@@ -1,0 +1,20 @@
+.social-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.facebook-share-button {
+    /* Add your custom styles for the FacebookShareButton component here */
+    /* For example: */
+    background-color: #3b5998;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.facebook-share-button:hover {
+    background-color: #2d4373;
+}
