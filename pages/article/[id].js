@@ -22,7 +22,7 @@ export default function ArticlePage({ article, error }) {
                 <meta name="description" content={description} />
                 <meta property="og:title" content={title} />
                 <meta property="og:description" content={description} />
-                <meta property="og:image" content={img01} />
+                <meta property="og:image" content={encodeURI(img01)} />
                 <meta property="og:type" content="article" />
             </Head>
             <article className="max-w-7xl mx-auto p-4">
