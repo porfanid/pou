@@ -1,47 +1,14 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { Carousel, Modal, Button } from "react-bootstrap";
-import { getFirebaseStorageUrlFull } from "../../../systems/UploadSystem/articleData/articleData";
-import { get, orderByChild, query, ref } from "firebase/database";
-import { database } from "../../components/firebase";
+import React, { useState } from "react";
 
-const PrimaryCarousel = ({ customSettings, classNameImages, shouldBeFull }) => {
-    const [images, setImages] = useState([]);
-    const [fullImages, setFullImages] = useState([]);
+const PrimaryCarousel = ({ customSettings, images, fullImages }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [showModal, setShowModal] = useState(false);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const snapshot = await get(query(ref(database, "/gigs"), orderByChild("thumbnail")));
-                const data = snapshot.val();
-                const imagePaths = Object.keys(data).map(itemKey => `/gigs/${itemKey}/${data[itemKey].thumbnail}`);
-
-                const imageUrls = await Promise.all(
-                    imagePaths.map(imagePath => getFirebaseStorageUrlFull(imagePath, !!shouldBeFull))
-                );
-                setImages(imageUrls);
-
-                if (!shouldBeFull) {
-                    const fullImageUrls = await Promise.all(
-                        imagePaths.map(imagePath => getFirebaseStorageUrlFull(imagePath, true))
-                    );
-                    setFullImages(fullImageUrls);
-                }
-            } catch (error) {
-                console.error("Error fetching images:", error);
-            }
-        };
-
-        fetchData();
-    }, [shouldBeFull]);
-
     const settings = {
-        controls: true,
-        indicators: true,
+        autoPlay: true,
         interval: 4000,
-        pause: "hover",
+        pauseOnHover: true,
         ...customSettings,
     };
 
@@ -56,38 +23,46 @@ const PrimaryCarousel = ({ customSettings, classNameImages, shouldBeFull }) => {
     };
 
     return (
-        <div>
+        <div className="relative w-full max-w-4xl mx-auto">
             {images.length > 0 && (
-                <Carousel {...settings}>
-                    {images.map((image, index) => (
-                        <Carousel.Item key={index} onClick={() => handleImageClick(index)}>
-                            <img
-                                src={image}
-                                alt={`slide${index}`}
-                                style={{ width: "100%", height: "auto" }}
-                            />
-                        </Carousel.Item>
-                    ))}
-                </Carousel>
+                <div className="relative overflow-hidden">
+                    <div className="flex w-full overflow-x-auto snap-x snap-mandatory scroll-smooth">
+                        {images.map((image, index) => (
+                            <div
+                                key={index}
+                                className="w-full flex-shrink-0 snap-center"
+                                onClick={() => handleImageClick(index)}
+                            >
+                                <img
+                                    src={image}
+                                    alt={`slide${index}`}
+                                    className="w-full h-auto object-cover cursor-pointer transition-transform hover:scale-105"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
 
-            <Modal size="lg" show={showModal} onHide={handleCloseModal} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Image Preview</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <img
-                        src={selectedImage}
-                        alt="Selected"
-                        style={{ width: "100%", height: "auto" }}
-                    />
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseModal}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+            {showModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
+                    <div className="relative bg-white p-4 rounded-lg shadow-lg w-full max-w-3xl">
+                        <button
+                            className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+                            onClick={handleCloseModal}
+                        >
+                            ✖
+                        </button>
+                        <div className="text-center">
+                            <img
+                                src={selectedImage}
+                                alt="Selected"
+                                className="w-full h-auto rounded-lg"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

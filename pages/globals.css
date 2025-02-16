@@ -1,3 +1,5 @@
+@import "./oldenglishfive.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,6 +10,7 @@ html {
 
 :root {
     --font-body: "Noto Serif", serif; /* Set your desired font stack */
+    --font-heading: 'Old English Five', serif;
 }
 
 body {
@@ -16,6 +19,9 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+h1 {
+    font-family: var(--font-heading), serif; /* Replace with your desired font variable */
+}
 
 p{
     @apply text-text
@@ -24,3 +30,63 @@ p{
 strong {
     @apply text-text-bold
 }
+
+
+@keyframes fire {
+    0%, 100% { text-shadow: 0 0 10px red, 0 0 20px orange, 0 0 30px yellow; }
+    50% { text-shadow: 0 0 20px red, 0 0 30px orange, 0 0 40px yellow; }
+}
+.animate-fire { animation: fire 1.5s infinite alternate; }
+
+@keyframes glitch {
+    0% { transform: translate(0, 0); opacity: 1; }
+    20% { transform: translate(-2px, 2px); opacity: 0.8; }
+    40% { transform: translate(2px, -2px); opacity: 1; }
+    60% { transform: translate(-2px, -2px); opacity: 0.9; }
+    80% { transform: translate(2px, 2px); opacity: 1; }
+    100% { transform: translate(0, 0); opacity: 1; }
+}
+.animate-glitch { animation: glitch 0.2s infinite alternate; }
+
+@keyframes shine {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.5); }
+    100% { filter: brightness(1); }
+}
+.animate-shine { animation: shine 2s infinite alternate; }
+
+@keyframes sweep {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+.animate-sweep { animation: sweep 3s linear infinite; }
+
+@keyframes soundwave {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.5); }
+}
+.animate-soundwave { animation: soundwave 1s infinite alternate; }
+
+/* Flame Effect */
+
+/* Global styles */
+@keyframes flame {
+    0% {
+        text-shadow: 0 0 5px rgba(255, 69, 0, 0.75), 0 0 10px rgba(255, 69, 0, 0.75);
+    }
+    50% {
+        text-shadow: 0 0 5px rgba(255, 140, 0, 0.75), 0 0 10px rgba(255, 140, 0, 0.75);
+    }
+    100% {
+        text-shadow: 0 0 5px rgba(255, 0, 0, 0.75), 0 0 10px rgba(255, 0, 0, 0.75);
+    }
+}
+
+.flame-effect {
+    animation: flame 1s infinite alternate;
+    color: #FF4500; /* flame color */
+    background: linear-gradient(45deg, #ff6347, #ff4500, #ff0000);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+

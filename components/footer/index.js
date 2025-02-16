@@ -1,24 +1,26 @@
+import Link from "next/link";
+
 export default function Footer() {
     return (
-        <footer className="bg-background dark:bg-background-dark text-text dark:text-text-dark py-8">
-            <div className="max-w-screen-xl mx-auto px-6 flex flex-col items-center justify-between space-y-4">
-                <div className="flex items-center justify-center space-x-6">
-                    <a href="#" className="text-primary hover:text-primary-hover transition-colors">
+        <footer className="bg-gradient-to-r from-[#200000] via-[#100000] to-[#200000] text-white py-8">
+            <div className="max-w-screen-xl mx-auto px-6 flex flex-col items-center space-y-4">
+                <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
+                    <Link href="/aboutUs" className="text-lg font-semibold hover:text-gray-200 transition-colors">
                         About Us
-                    </a>
-                    <a href="#" className="text-primary hover:text-primary-hover transition-colors">
+                    </Link>
+                    <Link href="/privacy" className="text-lg font-semibold hover:text-gray-200 transition-colors">
                         Privacy Policy
-                    </a>
-                    <a href="#" className="text-primary hover:text-primary-hover transition-colors">
+                    </Link>
+                    <Link href="/terms" className="text-lg font-semibold hover:text-gray-200 transition-colors">
                         Terms of Service
-                    </a>
-                    <a href="#" className="text-primary hover:text-primary-hover transition-colors">
+                    </Link>
+                    <a href="#" className="text-lg font-semibold hover:text-gray-200 transition-colors">
                         Contact
                     </a>
                 </div>
-                <div className="border-t border-border dark:border-dark mt-6 pt-4">
+                <div className="border-t border-gray-400 w-full pt-4">
                     <p className="text-sm text-center">
-                        &copy; {new Date().getFullYear()} Your Company. All rights reserved.
+                        &copy; {new Date().getFullYear()} Pulse Of the Underground. All rights reserved.
                     </p>
                 </div>
             </div>

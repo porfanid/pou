@@ -1,7 +1,22 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false
+    "authors": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "roles": {
+      ".read": "auth != null",
+      ".write": false // Example: only an admin can write to roles
+    },
+    ".read": false,  // Disables read access to everything else by default
+    ".write": false  // Disables write access to everything else by default
   }
-
 }

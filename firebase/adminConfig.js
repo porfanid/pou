@@ -32,6 +32,7 @@ export async function initializeFirebase() {
         console.error('Failed to fetch secret, falling back to local file:', error);
         try {
             serviceAccount = (await import('./heavy-local-admin.json')).default;
+            console.log("Imported the file");
         } catch (error) {
             console.error('Failed to load local service account file:', error);
             throw new Error('Failed to initialize Firebase in development.');
@@ -42,7 +43,7 @@ export async function initializeFirebase() {
     if (!admin.apps.length) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            storageBucket: 'heavy-local-12bc4.appspot.com', // Replace with your Firebase Storage bucket URL
+            storageBucket: 'heavy-local-12bc4', // Replace with your Firebase Storage bucket URL
             databaseURL: 'https://heavy-local-12bc4-default-rtdb.firebaseio.com', // Replace with your Firebase Realtime Database URL
         });
     }
@@ -54,8 +55,19 @@ export async function initializeFirebase() {
 // Lazy loading storage and database exports
 export const storage = async () => {
     const admin = await initializeFirebase();
-    return admin.storage();
+    return admin.storage().bucket('heavy-local-12bc4');
 };
+
+export const auth = async () => {
+    const admin = await initializeFirebase();
+    return admin.auth();
+};
+
+export const messaging = async () => {
+    const admin = await initializeFirebase();
+    return admin.messaging();
+};
+
 
 export const database = async () => {
     const admin = await initializeFirebase();

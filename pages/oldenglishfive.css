@@ -1,0 +1,8 @@
+@font-face {
+    font-family: 'Old English Five';
+    src: url('./OldEnglishFive.ttf') format('truetype');
+}
+
+.old-english-font {
+    font-family: 'Old English Five', serif;
+}

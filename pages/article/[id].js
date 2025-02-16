@@ -13,7 +13,7 @@ export default function ArticlePage({ article, error }) {
         return <p>Article not found</p>;
     }
 
-    const { title, description, content, sub, date, img01, details, translatedBy } = article;
+    const { title, description, content, sub,  img01, details, translatedBy } = article;
 
     return (
         <>
@@ -26,37 +26,44 @@ export default function ArticlePage({ article, error }) {
                 <meta property="og:type" content="article" />
             </Head>
             <article className="max-w-7xl mx-auto p-4">
-                <h1 className="text-3xl font-bold mb-4 text-text-title">{title}</h1>
-                <div className="text-gray-500 text-sm mb-4 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className={"grid grid-cols-1"}>
-                        <div className={"text-2xl text-center"}>
-                        Author:
+                <h1 className="mt-10 mb-10 text-4xl md:text-5xl font-extrabold text-transparent bg-gradient-to-r from-titleStart  to-titleRed bg-clip-text text-center animate-gradient-animation">
+                    {title}
+                </h1>
+
+                <div className="max-w-[50%]"> {/* Correct max-width class */}
+                    <div className="text-gray-500 text-sm mb-4 grid grid-cols-1 md:grid-cols-2 gap-0">
+                        <div className="">
+                            <div className="">
+                                Author:
+                            </div>
+                            <div className="">
+                                <AuthorOfArticle className="animate-bounceOnce" author={sub}/>
+                            </div>
                         </div>
-                        <div className="flex justify-center items-center">
-                            <AuthorOfArticle author={sub}/>
-                        </div>
-                    </div>
-                    {translatedBy&&
-                        <div className={"grid grid-cols-1"}>
-                            <div className={"text-2xl text-center"}>
+                        {translatedBy&&<div className="">
+                            <div>
                                 Translator:
                             </div>
-                            <div className="flex justify-center items-center">
-                                <AuthorOfArticle author={sub}/>
+                            <div className="">
+                                <AuthorOfArticle className="animate-bounceOnce" author={translatedBy}/>
                             </div>
                         </div>}
+                    </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
+
+
+                <hr className="mt-2 mb-10 border-gray-400"/>
+                <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-8 mb-4">
                     <div>
                         <Image layout={"responsive"} width={800} height={500} src={img01} alt={title}
                                className="w-full object-cover rounded mb-4"/>
                         <p className="lead">
-                        <span dangerouslySetInnerHTML={{__html: details}}></span>
+                            <span dangerouslySetInnerHTML={{__html: details}}></span>
                         </p>
                     </div>
                     <div className="relative p-4">
                         {/* Blurred Frame */}
-                        <div className="absolute inset-0 bg-black opacity-25 rounded-lg backdrop-blur-lg z-10"/>
+                        <div className="absolute inset-0 bg-gray-500 opacity-25 rounded-lg backdrop-blur-lg z-10"/>
                         <div
                             className="prose max-w-none relative z-20"
                             dangerouslySetInnerHTML={{__html: content}}
@@ -76,7 +83,7 @@ export default function ArticlePage({ article, error }) {
     );
 }
 
-async function getAuthor(authorCode, bucket, database){
+async function getAuthor(authorCode, bucket, database) {
     const author = await database.ref(`authors/${authorCode}`).once('value');
     if (author.exists()) {
         const authorData = author.val();
@@ -86,7 +93,7 @@ async function getAuthor(authorCode, bucket, database){
         } catch (e) {
             authorData.wantToShow = false;
         }
-        return { ...authorData, code: authorCode };
+        return {...authorData, code: authorCode};
     }
     return authorCode;
 }
@@ -102,9 +109,8 @@ export async function getServerSideProps(context) {
         if (!admin) {
             return { notFound: true }; // Admin SDK shouldn't run on client
         }
-
-        const bucket = (await admin.storage()).bucket();
-        const database = (await admin.database());
+        const bucket = await admin.storage();
+        const database = await admin.database();
 
         // Define the path to the article JSON file in Firebase Storage
         const articlePath = `articles/${id}.json`;
@@ -135,7 +141,6 @@ export async function getServerSideProps(context) {
             props: { article },
         };
     } catch (error) {
-        console.error("Error fetching article:", error.message);
         return { props: { error: `Failed to load the article: ${error.message}` } };
     }
 }

@@ -4,6 +4,8 @@ import { auth } from "../../../firebase/config";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
+import RulesModal from "../../RulesModal";
+import {useAuth} from "../../../context/AuthContext"; // Make sure to import the modal
 
 export default function Register() {
     const [email, setEmail] = useState("");
@@ -13,20 +15,19 @@ export default function Register() {
     const [isLoading, setIsLoading] = useState(false);
     const [redirectTo, setRedirectTo] = useState("/");
 
+    const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
+
     const router = useRouter();
 
-    useEffect(() => {
-        // Listen for auth state changes
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // If the user is logged in, redirect them to the previous page or default page
-                const redirectUrl = router.query?.redirect || "/";
-                router.push(redirectUrl);  // Redirect to the stored redirect URL
-            }
-        });
+    const {user} = useAuth();
 
-        return () => unsubscribe(); // Cleanup listener on component unmount
-    }, []);
+    useEffect(() => {
+        if (user) {
+            // If the user is logged in, redirect them to the previous page or default page
+            const redirectUrl = router.query?.redirect || "/";
+            router.push(redirectUrl.toString()).then();  // Redirect to the stored redirect URL
+        }
+    }, [user]);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -48,7 +49,7 @@ export default function Register() {
     };
 
     return (
-        <div className="bg-background dark:bg-background dark:text-text flex items-center justify-center py-8">
+        <div className="dark:text-text flex items-center justify-center py-8">
             <form
                 onSubmit={handleRegister}
                 className="p-8 rounded-xl shadow-lg w-96 bg-card dark:bg-card border border-border dark:border-dark"
@@ -119,6 +120,19 @@ export default function Register() {
                     {isLoading ? "Registering..." : "Register"}
                 </button>
 
+                {/* Rules Agreement Message */}
+                <div className="text-sm text-center mt-4">
+                    <p>
+                        By registering, you agree to our{" "}
+                        <span
+                            onClick={() => setIsModalOpen(true)}
+                            className="text-primary cursor-pointer hover:underline"
+                        >
+                            Community Rules
+                        </span>.
+                    </p>
+                </div>
+
                 {/* Links to Login Page */}
                 <div className="text-center mt-4">
                     <p className="text-sm">
@@ -129,6 +143,9 @@ export default function Register() {
                     </p>
                 </div>
             </form>
+
+            {/* Rules Modal */}
+            <RulesModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
     );
 }

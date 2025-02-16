@@ -1,17 +1,14 @@
-import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 
-const AuthorOfArticle = ({ author }) => {
+const AuthorOfArticle = ({ author, className = {} }) => {
     if (!author) return <div>Loading...</div>;
 
-    console.log(author);
-
     return (
-        <>
-            <div className="flex items-center">
+        <div className={className}>
+            <div className="flex items-center space-x-4">
                 {author.photoURL && (
-                    <div className="relative rounded-full overflow-hidden w-20 h-20 mr-4">
+                    <div className="relative rounded-full overflow-hidden w-10 h-10">
                         <Image
                             width={"100"}
                             height={"100"}
@@ -31,7 +28,7 @@ const AuthorOfArticle = ({ author }) => {
                     </div>
                 </Link>
             </div>
-        </>
+        </div>
     );
 };
 

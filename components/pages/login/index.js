@@ -40,12 +40,12 @@ export default function Login() {
     };
 
     return (
-        <div className="bg-background dark:bg-background dark:text-text flex items-center justify-center py-8">
+        <div className=" dark:text-text flex items-center justify-center py-8">
             <form
                 onSubmit={handleLogin}
                 className="p-8 rounded-xl shadow-lg w-full max-w-md bg-card dark:bg-card border border-border dark:border-dark"
             >
-                <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
+                <h1 className="text-2xl text-text font-bold mb-4 text-center">Login</h1>
 
                 {/* Email Field */}
                 <div className="mb-4">
@@ -90,7 +90,7 @@ export default function Login() {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-primary hover:bg-primary-hover text-text-light dark:text-text-light py-3 rounded-xl"
+                    className="w-full bg-primary hover:bg-primary-hover text-text dark:text-text py-3 rounded-xl"
                 >
                     {isLoading ? "Logging in..." : "Login"}
                 </button>
