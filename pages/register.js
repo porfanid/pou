@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../../../firebase/config";
+import { auth } from "../firebase/config";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { onAuthStateChanged } from "firebase/auth";
-import RulesModal from "../../RulesModal";
+import RulesModal from "../components/RulesModal";
 import {useAuth} from "../context/AuthContext"; // Make sure to import the modal
 
 export default function Register() {

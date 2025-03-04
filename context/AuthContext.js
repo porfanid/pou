@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
                     const userExistsInDb = await checkIfReferenceExists(userPath);
 
                     let userData;
+                    let unsubscribeUser=()=>{};
 
                     if(!userExistsInDb){
                         userData = firebaseUser;
@@ -49,7 +50,7 @@ export const AuthProvider = ({ children }) => {
                         setUser(userData);
                     }else {
                         const userRef = ref(database, userPath);
-                        const unsubscribeUser = onValue(userRef, (snapshot) => {
+                        unsubscribeUser = onValue(userRef, (snapshot) => {
                             userData = snapshot.val();
                             userData.claims = data.customClaims;
                             userData.uid = firebaseUser.uid;
