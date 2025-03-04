@@ -2,7 +2,8 @@ import React, { useState, useCallback } from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
 import DraftEditor from "../../components/editor/editor";
-import {EditorState} from "draft-js";
+import { EditorState } from "draft-js";
+import Select from "react-select";
 
 const ArticleUpload = () => {
     const [title, setTitle] = useState("");
@@ -14,6 +15,11 @@ const ArticleUpload = () => {
     const [message, setMessage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
+
+    const languageOptions = [
+        { value: "en", label: "English" },
+        { value: "el", label: "Greek" },
+    ];
 
     const onDrop = useCallback((acceptedFiles) => {
         if (acceptedFiles.length > 0) {
@@ -36,9 +42,6 @@ const ArticleUpload = () => {
         setLoading(true);
         setMessage(null);
 
-
-
-
         if (!image) {
             setMessage({ type: "error", text: "Please upload an image." });
             setLoading(false);
@@ -48,7 +51,6 @@ const ArticleUpload = () => {
         const formData = new FormData();
         formData.append("title", title);
         formData.append("details", details);
-        //formData.append("articleContent", content);
         formData.append("category", category);
         formData.append("language", language);
         formData.append("socials", JSON.stringify(socials));
@@ -68,10 +70,10 @@ const ArticleUpload = () => {
     };
 
     return (
-        <div className="max-w-3xl mx-auto p-8 bg-gray-950 text-white rounded-2xl shadow-2xl border border-red-700 mt-10">
-            <h2 className="text-4xl font-extrabold text-red-600 mb-6 uppercase tracking-widest text-center">Upload Your Metal Article</h2>
+        <div className="max-w-3xl mx-auto p-6 sm:p-8 bg-gray-950 text-white rounded-2xl shadow-2xl border border-red-700 mt-10 w-full">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-red-600 mb-6 uppercase tracking-widest text-center">Upload Your Metal Article</h2>
             {message && (
-                <div className={`p-4 rounded-lg ${message.type === "success" ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"} text-center font-bold`}>
+                <div className={`p-4 rounded-lg text-center font-bold ${message.type === "success" ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"}`}>
                     {message.text}
                 </div>
             )}
@@ -82,52 +84,74 @@ const ArticleUpload = () => {
                 </div>
 
                 <div>
-                    <label className="block text-lg font-semibold text-red-400">Details</label>
-                    <input type="text" value={details} onChange={(e) => setDetails(e.target.value)} required className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" />
-                </div>
-
-                <div>
                     <label className="block text-lg font-semibold text-red-400">Content</label>
-                    <DraftEditor setEditorState={setEditorState} editorState={editorState}/>
+                    <DraftEditor setEditorState={setEditorState} editorState={editorState} />
                 </div>
 
-                <div>
-                    <label className="block text-lg font-semibold text-red-400">Category</label>
-                    <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" />
-                </div>
-
-                <div>
-                    <label className="block text-lg font-semibold text-red-400">Language</label>
-                    <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500">
-                        <option value="en">English</option>
-                        <option value="el">Greek</option>
-                    </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-lg font-semibold text-red-400">Category</label>
+                        <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" />
+                    </div>
+                    <div>
+                        <label className="block text-lg font-semibold text-red-400">Language</label>
+                        <Select
+                            value={languageOptions.find(option => option.value === language)}
+                            onChange={(selectedOption) => setLanguage(selectedOption.value)}
+                            options={languageOptions}
+                            className="mt-2"
+                            classNamePrefix="react-select"
+                            styles={{
+                                control: (provided) => ({
+                                    ...provided,
+                                    backgroundColor: '#1f2937', // Tailwind bg-gray-900
+                                    borderColor: '#b91c1c', // Tailwind border-red-600
+                                    color: '#f00', // Tailwind text-white
+                                }),
+                                menu: (provided) => ({
+                                    ...provided,
+                                    backgroundColor: '#1f2937', // Tailwind bg-gray-900
+                                    color: '#f00',
+                                }),
+                                singleValue: (provided) => ({
+                                    ...provided,
+                                    color: '#ffffff', // Tailwind text-white
+                                    backgroundColor: '#1f2937',
+                                }),
+                                option: (provided, state) => ({
+                                    ...provided,
+                                    backgroundColor: state.isSelected ? '#791c1c' : state.isFocused ? '#471b1b' : '#1f2937', // Tailwind bg-red-600 for selected, darker red for hover, bg-gray-900 for others
+                                    color: state.isSelected ? '#ffffff' : '#ffffff', // Tailwind text-white
+                                })
+                            }}
+                        />
+                    </div>
                 </div>
 
                 <div>
                     <label className="block text-lg font-semibold text-red-400">Social Media Links</label>
-                    {Object.keys(socials).map((platform) => (
-                        <input
-                            key={platform}
-                            type="url"
-                            name={platform}
-                            placeholder={`${platform.charAt(0).toUpperCase() + platform.slice(1)} URL`}
-                            value={socials[platform]}
-                            onChange={handleSocialChange}
-                            className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500"
-                        />
-                    ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {Object.keys(socials).map((platform) => (
+                            <input
+                                key={platform}
+                                type="url"
+                                name={platform}
+                                placeholder={`${platform.charAt(0).toUpperCase() + platform.slice(1)} URL`}
+                                value={socials[platform]}
+                                onChange={handleSocialChange}
+                                className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500"
+                            />
+                        ))}
+                    </div>
                 </div>
 
-                <div {...getRootProps()} className={`mt-4 p-8 border-2 border-dashed rounded-xl text-center cursor-pointer transition ${isDragActive ? "border-red-500 bg-red-800" : "border-red-600 bg-gray-900"}`}>
+                <div {...getRootProps()} className={`mt-4 p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition ${isDragActive ? "border-red-500 bg-red-800" : "border-red-600 bg-gray-900"}`}>
                     <input {...getInputProps()} />
                     {image ? (
-                        <div className="flex items-center justify-center">
+                        <div className="flex flex-col items-center">
                             <img src={URL.createObjectURL(image)} alt="Preview" className="h-24 w-auto rounded-lg" />
-                            <p className="ml-4 text-red-300 font-semibold">{image.name}</p>
+                            <p className="mt-2 text-red-300 font-semibold">{image.name}</p>
                         </div>
-                    ) : isDragActive ? (
-                        <p className="text-red-500 font-bold text-lg">Drop the image here...</p>
                     ) : (
                         <p className="text-red-400 text-lg">Drag & Drop an image or <span className="text-red-500 underline">Click to Browse</span></p>
                     )}

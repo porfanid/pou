@@ -2,21 +2,49 @@
   "rules": {
     "authors": {
       "$uid": {
+        "displayName": {
+          ".read": true
+        },
+        "photoURL": {
+          ".read": true
+        },
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid"
       }
     },
     "users": {
       "$uid": {
+        "displayName": {
+          ".read": true
+        },
+        "photoURL": {
+          ".read": true
+        },
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "bands": {
+      "$bandId": {
+        "displayName": {
+          ".read": true
+        },
+        "photoURL": {
+          ".read": true
+        },
+        ".read": "auth != null && auth.uid === $bandId",
+        ".write": "auth != null && auth.uid === $bandId"
+      }
+    },
     "roles": {
       ".read": "auth != null",
-      ".write": false // Example: only an admin can write to roles
+      ".write": false
     },
-    ".read": false,  // Disables read access to everything else by default
-    ".write": false  // Disables write access to everything else by default
+    "comments": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    ".read": false,
+    ".write": false
   }
 }

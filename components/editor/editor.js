@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { EditorState, RichUtils, convertToRaw, convertFromRaw } from "draft-js";
+import { EditorState, RichUtils, convertToRaw, convertFromRaw, Modifier } from "draft-js";
 import Toolbar from "./toolbar";
 import createImagePlugin from "@draft-js-plugins/image";
 import Editor from "@draft-js-plugins/editor";
 import "@draft-js-plugins/image/lib/plugin.css";
-import  {stateToHTML} from 'draft-js-export-html';
+import { stateToHTML } from 'draft-js-export-html';
 
 // Initialize the image plugin
 const imagePlugin = createImagePlugin();
@@ -54,72 +54,105 @@ const DraftEditor = ({editorState, setEditorState}) => {
         fileInput.click();
     };
 
-    // Custom inline styles
+    // Custom inline styles that match the actual document styles
     const styleMap = {
+        BOLD: {
+            color: "#af0000", // Using the text-bold color from tailwind config
+            fontWeight: "bold"
+        },
+        RED_BOLD: {
+            color: "#af0000", // Using the text-bold color from tailwind config
+            fontWeight: "bold"
+        },
+        ITALIC: {
+            fontStyle: "italic"
+        },
+        UNDERLINE: {
+            textDecoration: "underline"
+        },
         CODE: {
-            className: "bg-gray-100 dark:bg-gray-800 font-mono text-sm p-2",
-            style: {
-                backgroundColor: "var(--tw-bg-opacity, rgba(0, 0, 0, 0.05))",
-                fontFamily: "theme(fontFamily.mono)",
-                fontSize: "theme(fontSize.sm)",
-                padding: "theme(spacing.2)",
-            },
+            backgroundColor: "rgba(0, 0, 0, 0.05)",
+            fontFamily: "monospace",
+            fontSize: "0.875rem", // theme(fontSize.sm)
+            padding: "0.5rem", // theme(spacing.2)
         },
         HIGHLIGHT: {
-            className: "bg-pink-900",
-            style: { backgroundColor: "#900000" },
+            backgroundColor: "#900000"
         },
         UPPERCASE: {
-            className: "uppercase",
-            style: { textTransform: "uppercase" },
+            textTransform: "uppercase"
         },
         LOWERCASE: {
-            className: "lowercase",
-            style: { textTransform: "lowercase" },
-        },
-        CODEBLOCK: {
-            className: "bg-red-100 dark:bg-red-800 font-mono italic leading-relaxed p-3 px-4 rounded-md",
-            style: {
-                fontFamily: "theme(fontFamily.mono)",
-                fontSize: "inherit",
-                background: "theme(colors.red.100)",
-                fontStyle: "italic",
-                lineHeight: "theme(lineHeight.relaxed)",
-                padding: "theme(spacing.3) theme(spacing.4)",
-                borderRadius: "theme(borderRadius.md)",
-            },
+            textTransform: "lowercase"
         },
         SUPERSCRIPT: {
-            className: "align-super text-xs",
-            style: { verticalAlign: "super", fontSize: "theme(fontSize.xs)" },
+            verticalAlign: "super",
+            fontSize: "0.75rem" // theme(fontSize.xs)
         },
         SUBSCRIPT: {
-            className: "align-sub text-xs",
-            style: { verticalAlign: "sub", fontSize: "theme(fontSize.xs)" },
+            verticalAlign: "sub",
+            fontSize: "0.75rem" // theme(fontSize.xs)
         },
         TITLE: {
-            className: "text-title",
-            style: { color: "theme(colors.text.title)" },
+            color: "#ffffff" // theme(colors.text.title)
         },
         MUTED: {
-            className: "text-text-muted",
-            style: { color: "theme(colors.text.muted)" },
+            color: "#c3c3c3" // theme(colors.text.muted)
+        },
+        STRIKETHROUGH: {
+            textDecoration: "line-through"
         },
         BODY: {
-            className: "font-body",
-            style: { fontFamily: "theme(fontFamily.body)" },
+            fontFamily: "var(--font-body), 'Noto Serif', serif"
         },
         CARD: {
-            className: "bg-card rounded-md p-4 shadow-md",
-            style: { backgroundColor: "theme(colors.card)", borderRadius: "theme(borderRadius.md)", padding: "theme(spacing.4)" },
+            backgroundColor: "#1a1a1a", // theme(colors.card)
+            borderRadius: "0.375rem", // theme(borderRadius.md)
+            padding: "1rem" // theme(spacing.4)
         },
     };
 
-    // Custom block styles
+    // Function to apply text transformation (uppercase/lowercase)
+    const applyTextTransform = (transform) => {
+        const selection = editorState.getSelection();
+        const contentState = editorState.getCurrentContent();
+        const currentContent = editorState.getCurrentContent();
+        const currentBlock = currentContent.getBlockForKey(selection.getStartKey());
+        const start = selection.getStartOffset();
+        const end = selection.getEndOffset();
+        const selectedText = currentBlock.getText().slice(start, end);
+
+        if (selectedText) {
+            let transformedText;
+            if (transform === 'UPPERCASE') {
+                transformedText = selectedText.toUpperCase();
+            } else if (transform === 'LOWERCASE') {
+                transformedText = selectedText.toLowerCase();
+            } else {
+                return;
+            }
+
+            const newContentState = Modifier.replaceText(
+                contentState,
+                selection,
+                transformedText
+            );
+
+            const newEditorState = EditorState.push(
+                editorState,
+                newContentState,
+                'apply-text-transform'
+            );
+
+            setEditorState(newEditorState);
+        }
+    };
+
+    // Custom block styles that match the document styles
     const myBlockStyleFn = (contentBlock) => {
         const type = contentBlock.getType();
         switch (type) {
-            case "blockQuote":
+            case "blockquote":
                 return "text-xl text-white italic pl-4 border-l-4 border-red-600";
             case "leftAlign":
                 return "text-left";
@@ -130,16 +163,111 @@ const DraftEditor = ({editorState, setEditorState}) => {
             case "justifyAlign":
                 return "text-justify";
             case "bold":
-                return "font-bold";
+                return "font-bold text-text-bold";
+            case "code-block":
+                return "bg-red-100 dark:bg-red-800 font-mono italic leading-relaxed p-3 px-4 rounded-md";
+            case "header-one":
+                return "text-4xl font-bold font-heading";
+            case "header-two":
+                return "text-3xl font-bold";
+            case "header-three":
+                return "text-2xl font-bold";
+            case "header-four":
+                return "text-xl font-bold";
+            case "header-five":
+                return "text-lg font-bold";
+            case "header-six":
+                return "text-base font-bold";
+            case "unordered-list-item":
+                return "list-disc ml-5";
+            case "ordered-list-item":
+                return "list-decimal ml-5";
             default:
-                return null;
+                return "text-text"; // Default text color from tailwind
         }
     };
 
+    // Custom options for HTML export
+    const exportOptions = {
+        inlineStyles: {
+            BOLD: {element: 'strong', style: {color: '#af0000', fontWeight: 'bold'}},
+            RED_BOLD: {element: 'strong', style: {color: '#af0000', fontWeight: 'bold'}},
+            ITALIC: {element: 'em'},
+            UNDERLINE: {element: 'u'},
+            HIGHLIGHT: {element: 'span', style: {backgroundColor: '#900000'}},
+            SUPERSCRIPT: {element: 'sup'},
+            SUBSCRIPT: {element: 'sub'},
+            STRIKETHROUGH: {element: 's'},
+            CODE: {element: 'code', style: {display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.05)', fontFamily: 'monospace', padding: '0.5em'}},
+        },
+        blockStyleFn: (block) => {
+            const type = block.getType();
+            if (type === 'blockquote') {
+                return {
+                    style: {
+                        borderLeft: '4px solid #dc2626',
+                        paddingLeft: '1rem',
+                        fontStyle: 'italic',
+                        fontSize: '1.25rem',
+                        color: '#ffffff'
+                    }
+                };
+            }
+            if (type === 'code-block') {
+                return {
+                    element: 'pre',
+                    style: {
+                        fontFamily: 'monospace',
+                        backgroundColor: '#f8cecc',
+                        padding: '1em',
+                        borderRadius: '0.375rem'
+                    }
+                };
+            }
+            if (type.startsWith('header-')) {
+                const level = type.charAt(7);
+                return {
+                    element: `h${level}`,
+                    style: level === '1' ? { fontFamily: 'var(--font-heading), serif' } : {}
+                };
+            }
+            // Add text alignment styles
+            if (type === 'leftAlign') {
+                return {
+                    style: { textAlign: 'left', color: '#c3c3c3' }
+                };
+            }
+            if (type === 'centerAlign') {
+                return {
+                    style: { textAlign: 'center', color: '#c3c3c3' }
+                };
+            }
+            if (type === 'rightAlign') {
+                return {
+                    style: { textAlign: 'right', color: '#c3c3c3' }
+                };
+            }
+            if (type === 'justifyAlign') {
+                return {
+                    style: { textAlign: 'justify', color: '#c3c3c3' }
+                };
+            }
+            return {
+                style: { color: '#c3c3c3' } // Default text color
+            };
+        }
+    }
+
     return (
-        <div className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" onClick={focusEditor}>
-            <Toolbar imagePlugin={imagePlugin} editorState={editorState} setEditorState={setEditorState} onImageUpload={onImageUpload} />
-            <div className="editor-container bg-gray-900 p-4 rounded-lg border-2 border-gray-800">
+        <div className="mt-2 p-3 w-full bg-background border border-red-600 rounded-lg text-text focus:ring-2 focus:ring-red-500" onClick={focusEditor}>
+            <Toolbar
+                imagePlugin={imagePlugin}
+                editorState={editorState}
+                setEditorState={setEditorState}
+                onImageUpload={onImageUpload}
+                applyTextTransform={applyTextTransform}
+            />
+            <div className="editor-container bg-background p-4 rounded-lg border-2 border-gray-800 font-body">
                 <Editor
                     ref={editor}
                     placeholder="Write Here"
@@ -149,8 +277,8 @@ const DraftEditor = ({editorState, setEditorState}) => {
                     blockStyleFn={myBlockStyleFn}
                     onChange={(editorState) => {
                         const contentState = editorState.getCurrentContent();
-                        console.log("contentSTate: ",convertToRaw(contentState));
-                        console.log(stateToHTML(contentState));
+                        console.log("contentSTate: ", convertToRaw(contentState));
+                        console.log(stateToHTML(contentState, exportOptions));
                         setEditorState(editorState);
                     }}
                     plugins={plugins} // Apply the image plugin

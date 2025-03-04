@@ -1,88 +1,59 @@
-/*
- * Copyright (c) 2024. MIT License
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+import React, { useEffect, useState } from "react";
+import { database } from "../firebase/config";
+import { get, ref, child } from "firebase/database";
 
-import React, {useEffect, useState} from "react";
-import {database} from "../firebase/config";
-import {get, ref} from "firebase/database";
-
-export function CommentAuthor({authorCode}) {
-
+export function CommentAuthor({ authorCode }) {
+    const [user, setUser] = useState(null);
     const [userCard, setUserCard] = useState({ show: false, position: { top: 0, left: 0 } });
 
-    const [user, setUser] = useState({});
-
-    const showUserCard = (user, e) => {
-        const position = { top: e.clientY + 10, left: e.clientX + 10 };
-        setUserCard({ show: true, user, position });
+    const showUserCard = (e) => {
+        setUserCard({ show: true, position: { top: e.clientY + 10, left: e.clientX + 10 } });
     };
 
     const hideUserCard = () => {
-        setUserCard({ show: false, user: null, position: { top: 0, left: 0 } });
+        setUserCard({ show: false });
     };
 
     useEffect(() => {
-        console.log(authorCode);
-        let userRef = ref(database, `authors/${authorCode}`);
-        get(userRef).then((snapshot) => {
-            if(!snapshot.exists()){
-                userRef = ref(database, `users/${authorCode}`);
-                get(userRef).then((snapshot) => {
-                    if(!snapshot.exists()){
-                        userRef = ref(database, `bands/${authorCode}`);
-                        get(userRef).then((snapshot) => {
-                            setUser(snapshot.val());
+        const fetchUser = async () => {
+            const paths = ["authors", "users", "bands"];
+
+            for (const path of paths) {
+                try {
+                    const displayNameRef = child(ref(database), `${path}/${authorCode}/displayName`);
+                    const photoURLRef = child(ref(database), `${path}/${authorCode}/photoURL`);
+
+                    const displayNameSnap = await get(displayNameRef);
+                    const photoURLSnap = await get(photoURLRef);
+
+                    if (displayNameSnap.exists() || photoURLSnap.exists()) {
+                        setUser({
+                            displayName: displayNameSnap.val() || authorCode, // Fallback to authorCode
+                            photoURL: photoURLSnap.exists() ? photoURLSnap.val() : null,
                         });
-                    }else {
-                        setUser(snapshot.val());
+                        return;
                     }
-                });
-            }else {
-                setUser(snapshot.val());
+                } catch (error) {
+                    console.error(`Firebase Error: ${error.message}`);
+                }
             }
 
-            console.log(authorCode)
-        })
-    }, []);
+            setUser({ displayName: authorCode, photoURL: null }); // Default if not found
+        };
 
-    if(!user){
-        return (
-            <span
-                onMouseOver={(e) => showUserCard(user, e)}
-                onMouseOut={hideUserCard}
-            >
-                @{authorCode}
-            </span>
-        )
-    }
+        fetchUser();
+    }, [authorCode]);
 
     return (
         <>
             <span
-                onMouseOver={(e) => showUserCard(user, e)}
+                onMouseOver={showUserCard}
                 onMouseOut={hideUserCard}
             >
-                @{user.displayName}
+                @{user ? user.displayName : authorCode}
             </span>
 
-            {userCard.show && (
+            {userCard.show && user && (
                 <div
                     className="user-card"
                     style={{
@@ -97,9 +68,9 @@ export function CommentAuthor({authorCode}) {
                     }}
                 >
                     <strong>{user.displayName}</strong>
-                    <img src={user.photoURL} alt={user.displayName} className="img-fluid rounded-circle" />
+                    {user.photoURL && <img src={user.photoURL} alt={user.displayName} className="img-fluid rounded-circle" />}
                 </div>
             )}
         </>
-    )
+    );
 }

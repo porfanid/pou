@@ -1,67 +1,57 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { get, onValue, push, ref, remove, set, update } from 'firebase/database';
-import { auth, database } from '../firebase/config';
-import { getIdTokenResult } from 'firebase/auth';
+import { database } from '../firebase/config';
 import { CommentAuthor } from './CommentAuthor';
+import { useAuth } from '../context/AuthContext';
 
-const CommentSystem = ({ articleName, commentId }) => {
+const CommentSystem = ({ articleName }) => {
     const [comments, setComments] = useState({});
     const [newComment, setNewComment] = useState('');
-    const [replyComment, setReplyComment] = useState('');
-    const [replyTo, setReplyTo] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editedComment, setEditedComment] = useState('');
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [showModal, setShowModal] = useState(false);
-    const replyInputRef = useRef(null);
+
+    const { user, roles } = useAuth();
+    const isAdmin = roles && roles.isCommentAdmin;
 
     useEffect(() => {
         const commentsRef = ref(database, `comments/${articleName}`);
-        onValue(commentsRef, (snapshot) => {
+        const unsubscribe = onValue(commentsRef, (snapshot) => {
             setComments(snapshot.val() || {});
         });
+
+        return () => unsubscribe();
     }, [articleName]);
 
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                const commentAdminRef = ref(database, `roles/comments`);
-                get(commentAdminRef).then((snapshot) => {
-                    setIsAdmin(snapshot.exists() && snapshot.val().includes(user.email));
-                });
+    const handlePostComment = async () => {
+        if (!newComment.trim()) return;
+        if (!user || !user.uid || !user.displayName) {
+            console.error("Error: Missing user data");
+            return;
+        }
 
-                const idTokenResult = await getIdTokenResult(user);
-                const userRef = ref(database, `${idTokenResult.claims.admin ? 'authors' : 'users'}/${user.uid}`);
-                await update(userRef, {
-                    email: user.email,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL || ''
-                });
-
-                setCurrentUser({ uid: user.uid, displayName: user.displayName, photoURL: user.photoURL });
-            } else {
-                setCurrentUser(null);
-            }
-        });
-        return () => unsubscribe();
-    }, []);
-
-    const handlePostComment = () => {
-        if (newComment.trim() && currentUser) {
+        try {
             const newCommentRef = push(ref(database, `comments/${articleName}`));
-            set(newCommentRef, {
+            await set(newCommentRef, {
                 text: newComment,
-                user: currentUser.uid,
-                displayName: currentUser.displayName,
+                user: user.uid,
+                displayName: user.displayName,
                 timestamp: Date.now(),
                 replies: {},
             });
+
             setNewComment('');
+        } catch (error) {
+            console.error("Firebase Error:", error.message);
         }
     };
 
-    const handleDeleteComment = async (commentId) => remove(ref(database, `comments/${articleName}/${commentId}`));
+    const handleDeleteComment = async (commentId) => {
+        try {
+            await remove(ref(database, `comments/${articleName}/${commentId}`));
+        } catch (error) {
+            console.error("Error deleting comment:", error.message);
+        }
+    };
 
     const handleEditComment = (commentId, text) => {
         setEditingCommentId(commentId);
@@ -69,29 +59,86 @@ const CommentSystem = ({ articleName, commentId }) => {
     };
 
     const handleSaveEditedComment = async (commentId) => {
-        await update(ref(database, `comments/${articleName}/${commentId}`), { text: editedComment });
+        if (!editedComment.trim()) return;
+
+        try {
+            await update(ref(database, `comments/${articleName}/${commentId}`), { text: editedComment });
+            setEditingCommentId(null);
+            setEditedComment('');
+        } catch (error) {
+            console.error("Error updating comment:", error.message);
+        }
+    };
+
+    const handleCancelEdit = () => {
         setEditingCommentId(null);
         setEditedComment('');
     };
 
-    const renderComments = (comments, parent) => {
+    const renderComments = (comments) => {
         return Object.keys(comments).map((key) => {
             const comment = comments[key];
-            const isAuthor = currentUser && comment.user === currentUser.uid;
+            const isAuthor = user && comment.user === user.uid;
+
             return (
                 <div key={key} className="bg-black text-white border border-red-700 rounded-lg p-4 shadow-md mb-4">
-                    <p className="text-red-500 font-bold text-lg gothic-font"><CommentAuthor authorCode={comment.displayName} /></p>
+                    <div className="text-red-500 font-bold text-lg gothic-font">
+                        <CommentAuthor authorCode={comment.displayName} />
+                    </div>
+
                     {editingCommentId === key ? (
-                        <input type="text" value={editedComment} onChange={(e) => setEditedComment(e.target.value)}
-                               className="w-full bg-gray-900 text-white p-2 rounded-md border border-gray-600" />
+                        <div>
+                            <input
+                                type="text"
+                                value={editedComment}
+                                onChange={(e) => setEditedComment(e.target.value)}
+                                className="w-full bg-gray-900 text-white p-2 rounded-md border border-gray-600"
+                            />
+                            <div className="flex space-x-4 mt-2">
+                                <button
+                                    onClick={() => handleSaveEditedComment(key)}
+                                    className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-800"
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    onClick={handleCancelEdit}
+                                    className="bg-gray-600 text-white px-3 py-1 rounded-md hover:bg-gray-800"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
                     ) : (
                         <p className="text-gray-300">{comment.text}</p>
                     )}
-                    <div className="flex space-x-4 mt-2">
-                        {isAuthor && <button onClick={() => handleEditComment(key, comment.text)} className="text-yellow-500">Edit</button>}
-                        {(isAuthor || isAdmin) && <button onClick={() => handleDeleteComment(key)} className="text-red-500">Delete</button>}
-                    </div>
-                    {comment.replies && <div className="ml-6 mt-3 border-l border-red-700 pl-4">{renderComments(comment.replies, key)}</div>}
+
+                    {!editingCommentId && (
+                        <div className="flex space-x-4 mt-2">
+                            {isAuthor && (
+                                <button
+                                    onClick={() => handleEditComment(key, comment.text)}
+                                    className="text-yellow-500"
+                                >
+                                    Edit
+                                </button>
+                            )}
+                            {(isAuthor || isAdmin) && (
+                                <button
+                                    onClick={() => handleDeleteComment(key)}
+                                    className="text-red-500"
+                                >
+                                    Delete
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {comment.replies && (
+                        <div className="ml-6 mt-3 border-l border-red-700 pl-4">
+                            {renderComments(comment.replies)}
+                        </div>
+                    )}
                 </div>
             );
         });
@@ -100,13 +147,23 @@ const CommentSystem = ({ articleName, commentId }) => {
     return (
         <div className="max-w-2xl mx-auto mt-6 gothic-font">
             <div className="bg-black text-white p-4 rounded-lg border border-red-700">
-                <input type="text" placeholder="Write a comment..." value={newComment} onChange={(e) => setNewComment(e.target.value)}
-                       className="w-full bg-gray-900 text-white p-2 rounded-md border border-gray-600" />
-                <button onClick={handlePostComment} className="mt-2 bg-red-700 text-white px-4 py-2 rounded-md hover:bg-red-900">
-                    {currentUser ? "Post Comment" : "Log In to Post"}
+                <input
+                    type="text"
+                    placeholder="Write a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="w-full bg-gray-900 text-white p-2 rounded-md border border-gray-600"
+                />
+                <button
+                    onClick={handlePostComment}
+                    className="mt-2 bg-red-700 text-white px-4 py-2 rounded-md hover:bg-red-900"
+                >
+                    {user ? "Post Comment" : "Log In to Post"}
                 </button>
             </div>
-            <div className="mt-4">{Object.keys(comments).length > 0 ? renderComments(comments, null) : <p className="text-gray-400">No comments yet.</p>}</div>
+            <div className="mt-4">
+                {Object.keys(comments).length > 0 ? renderComments(comments) : <p className="text-gray-400">No comments yet.</p>}
+            </div>
         </div>
     );
 };

@@ -1,9 +1,8 @@
 import {useEffect, useRef, useState} from "react";
 import Footer from "../components/footer";
 import AppNavigation from "../components/navigation/navigation";
-import {auth, database} from "../firebase/config";
-import {get, onValue, ref} from "firebase/database";
-import {AuthProvider, useAuth} from "../context/AuthContext";
+import {useAuth} from "../context/AuthContext";
+import DonationWidget from "../components/donation/DonationWidget";
 
 export default function RootLayout({children}) {
     const [menuVisible, setMenuVisible] = useState(true);
@@ -62,6 +61,7 @@ export default function RootLayout({children}) {
                     {children}
                 </main>
                 <Footer/>
+                <DonationWidget />
             </div>
     );
 }

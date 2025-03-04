@@ -83,7 +83,7 @@ const AppNavigation = ({ menuVisible, user, roles, notifications }) => {
                             <button className="flex items-center text-gray-400 hover:text-red-600 transition-all duration-300"
                                     onClick={() => setDropdownOpen(!dropdownOpen)}>
                                 <Image height={100} width={100} src={user.photoURL || "https://via.placeholder.com/50"}
-                                     alt="Profile" className="w-10 h-10 rounded-full border-2 border-gray-600 shadow-lg" />
+                                     alt="Profile" className={`w-10 h-10 rounded-full ${user.photoURL&&"border-2"} border-gray-600 shadow-lg`} />
                                 {unreadNotificationsCount > 0 && (
                                     <span className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold rounded-full px-1 shadow-lg">
                                         {unreadNotificationsCount}
@@ -93,10 +93,10 @@ const AppNavigation = ({ menuVisible, user, roles, notifications }) => {
                             <div className={`absolute right-0 bg-gray-900 border border-gray-700 p-2 shadow-xl rounded-lg mt-2 transition-opacity duration-200 ${dropdownOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                                  onMouseEnter={() => setDropdownOpen(true)}
                                  onMouseLeave={() => setDropdownOpen(false)}>
-                                <Link className="block text-gray-300 hover:text-red-500 p-2" href="/profile">
+                                <Link className="block text-gray-300 hover:text-red-500 p-2" href="/user/profile">
                                     <strong>{user.displayName}</strong>
                                 </Link>
-                                <Link className="block text-gray-300 hover:text-red-500 p-2" href="/notifications">
+                                <Link className="block text-gray-300 hover:text-red-500 p-2" href="/user/notifications">
                                     Notifications {unreadNotificationsCount > 0 && (<span className="text-red-500">({unreadNotificationsCount})</span>)}
                                 </Link>
                                 <button onClick={() => signOut(auth)} className="block w-full text-gray-300 bg-red-700 hover:bg-red-800 transition-all duration-300 p-2 text-center rounded-lg">

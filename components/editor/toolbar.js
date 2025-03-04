@@ -22,11 +22,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { RichUtils, EditorState } from "draft-js";
 
-const Toolbar = ({ imagePlugin, editorState, setEditorState }) => {
+const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, applyTextTransform }) => {
     const fileInputRef = useRef(null);
 
     const tools = [
-        { label: "bold", style: "BOLD", icon: <FontAwesomeIcon icon={faBold} />, method: "inline" },
+        // Bold button with actual document styling
+        { label: "bold", style: "BOLD", icon: <FontAwesomeIcon icon={faBold}/>, method: "inline" },
         { label: "italic", style: "ITALIC", icon: <FontAwesomeIcon icon={faItalic} />, method: "inline" },
         { label: "underline", style: "UNDERLINE", icon: <FontAwesomeIcon icon={faUnderline} />, method: "inline" },
         { label: "highlight", style: "HIGHLIGHT", icon: <FontAwesomeIcon icon={faHighlighter} />, method: "inline" },
@@ -37,19 +38,23 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState }) => {
         { label: "Blockquote", style: "blockquote", icon: <FontAwesomeIcon icon={faQuoteRight} transform="grow-2" />, method: "block" },
         { label: "Unordered-List", style: "unordered-list-item", icon: <FontAwesomeIcon icon={faListUl} transform="grow-6" />, method: "block" },
         { label: "Ordered-List", style: "ordered-list-item", icon: <FontAwesomeIcon icon={faListOl} transform="grow-6" />, method: "block" },
-        { label: "Code Block", style: "CODEBLOCK", icon: <FontAwesomeIcon icon={faCode} transform="grow-3" />, method: "inline" },
-        { label: "Uppercase", style: "UPPERCASE", icon: <FontAwesomeIcon icon={faChevronUp} transform="grow-3" />, method: "inline" },
-        { label: "lowercase", style: "LOWERCASE", icon: <FontAwesomeIcon icon={faChevronDown} transform="grow-3" />, method: "inline" },
+        { label: "Code Block", style: "code-block", icon: <FontAwesomeIcon icon={faCode} transform="grow-3" />, method: "block" },
+        { label: "Uppercase", style: "UPPERCASE", icon: <FontAwesomeIcon icon={faChevronUp} transform="grow-3" />, method: "transform" },
+        { label: "lowercase", style: "LOWERCASE", icon: <FontAwesomeIcon icon={faChevronDown} transform="grow-3" />, method: "transform" },
         { label: "Left", style: "leftAlign", icon: <FontAwesomeIcon icon={faAlignLeft} transform="grow-2" />, method: "block" },
         { label: "Center", style: "centerAlign", icon: <FontAwesomeIcon icon={faAlignCenter} transform="grow-2" />, method: "block" },
         { label: "Right", style: "rightAlign", icon: <FontAwesomeIcon icon={faAlignRight} transform="grow-2" />, method: "block" },
         { label: "Image", icon: <FontAwesomeIcon icon={faImage} />, method: "image" },
-        { label: "H1", style: "header-one", method: "block" },
-        { label: "H2", style: "header-two", method: "block" },
-        { label: "H3", style: "header-three", method: "block" },
-        { label: "H4", style: "header-four", method: "block" },
-        { label: "H5", style: "header-five", method: "block" },
-        { label: "H6", style: "header-six", method: "block" },
+    ];
+
+    // Header tools with custom styling to show actual style
+    const headerTools = [
+        { label: "H1", style: "header-one", method: "block", className: "font-heading text-lg" },
+        { label: "H2", style: "header-two", method: "block", className: "text-base font-bold" },
+        { label: "H3", style: "header-three", method: "block", className: "text-sm font-bold" },
+        { label: "H4", style: "header-four", method: "block", className: "text-xs font-bold" },
+        { label: "H5", style: "header-five", method: "block", className: "text-xs" },
+        { label: "H6", style: "header-six", method: "block", className: "text-xs" },
     ];
 
     const applyStyle = (e, style, method) => {
@@ -60,6 +65,8 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState }) => {
             setEditorState(RichUtils.toggleInlineStyle(editorState, style));
         } else if (method === "image") {
             fileInputRef.current.click();
+        } else if (method === "transform") {
+            applyTextTransform(style);
         }
     };
 
@@ -94,23 +101,53 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState }) => {
         return false;
     };
 
+    // Generate style classes based on the tool type
+    const getButtonStyle = (item) => {
+        let baseStyle = `p-2 transition-colors duration-200 hover:text-white focus:outline-none`;
+
+        // If item is active, add active style
+        if (isActive(item.style, item.method)) {
+            return `${baseStyle} text-white bg-red-900 rounded`;
+        } else {
+            return `${baseStyle} text-red-600`;
+        }
+    };
+
     return (
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 p-2 ">
-            {tools.map((item, idx) => (
-                <button
-                    key={`${item.label}-${idx}`}
-                    title={item.label}
-                    onClick={(e) => applyStyle(e, item.style, item.method)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    className={`${
-                        isActive(item.style, item.method)
-                            ? "text-white"
-                            : "text-gray-400"
-                    } p-2 transition-colors duration-200 hover:text-white focus:outline-none`}
-                >
-                    {item.icon || item.label}
-                </button>
-            ))}
+        <div className="p-2 border-b border-gray-800 mb-2">
+            {/* Main toolbar with formatting options */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mb-2">
+                {tools.map((item, idx) => (
+                    <button
+                        key={`${item.label}-${idx}`}
+                        title={item.label}
+                        onClick={(e) => applyStyle(e, item.style, item.method)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        className={getButtonStyle(item)}
+                    >
+                        {item.icon || item.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Heading toolbar - display headings with actual styling */}
+            <div className="gap-2 pt-1 border-t border-gray-800">
+                <span className="flex items-center mr-2 text-gray-400">
+                    Headers:
+                </span>
+                {headerTools.map((item, idx) => (
+                    <button
+                        key={`${item.label}-${idx}`}
+                        title={item.label}
+                        onClick={(e) => applyStyle(e, item.style, item.method)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        className={`${getButtonStyle(item)} ${item.className || ""}`}
+                    >
+                        {item.label}
+                    </button>
+                ))}
+            </div>
+
             <input
                 ref={fileInputRef}
                 type="file"

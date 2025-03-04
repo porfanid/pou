@@ -13,9 +13,7 @@ import youtube_gif from "../components/social_icons/Youtube_100x100.gif";
 import reddit_gif from "../components/social_icons/redit_100x100.gif";
 
 
-const Socials = () => {
-
-    const dimensions = 80;
+const Socials = ({dimensions}) => {
 
     return (
         <div className="flex flex-wrap justify-center lg:flex-col items-center gap-4">
@@ -72,7 +70,7 @@ const HeroSection = () => {
                             className="max-w-full rounded-lg shadow-2xl"
                         ></iframe>
                     </div>
-                    <Socials/>
+                    <Socials dimensions={80}/>
                 </div>
 
                 <Link href="#latest-articles"

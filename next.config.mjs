@@ -15,7 +15,8 @@ const nextConfig = {
             'firebasestorage.googleapis.com',
             'heavy-local.com',
             "lh3.googleusercontent.com",
-            "i.ytimg.com"
+            "i.ytimg.com",
+            "via.placeholder.com"
         ],
     },
 };
