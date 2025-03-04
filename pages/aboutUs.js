@@ -1,6 +1,5 @@
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import "../components/pages/index/oldenglishfive.css";
 
 const AuthorCard = ({ name, bio, photoURL, role }) => (
     <div className="bg-[#100000] p-6 rounded-2xl shadow-lg transition-transform duration-300 hover:scale-105 hover:bg-gray-800">
@@ -43,7 +42,7 @@ export default function AboutUs({ authors }) {
                         ))
                     : Object.entries(authors).map(([key, author]) =>
                         author.displayName ? (
-                            <AuthorCard key={key} name={author.displayName} photoURL={author.photoURL} bio={author.bio} />
+                            <AuthorCard key={key} name={author.displayName} photoURL={author.photoURL} bio={author.bio} role={author.role} />
                         ) : null
                     )}
             </div>
@@ -58,16 +57,39 @@ export default function AboutUs({ authors }) {
     );
 }
 
+const listAllUsers = async (nextPageToken, auth) => {
+    // List batch of users, 1000 at a time.
+    let result;
+    if(!nextPageToken){
+        result = await auth.listUsers(1000);
+    }else{
+        result = await auth.listUsers(1000, nextPageToken);
+    }
+    const adminUsers = result.users.filter(user => user.customClaims && user.customClaims.admin);
+
+    if (result.pageToken) {
+        // List next batch of users.
+        const nextBatch = await listAllUsers(result.pageToken);
+        return adminUsers.concat(nextBatch);
+    }
+    return adminUsers;
+};
+
 export async function getServerSideProps() {
     const admin = require('../firebase/adminConfig');
+    const auth = await admin.auth();
+
+    const adminUsers = (await listAllUsers(null,auth)).map(user=>user.uid);
 
     try {
         const database = await  admin.database();
-        const authorsRef = database.ref('authors');
+        const authorsRef = database.ref('users');
         const snapshot = await authorsRef.once('value');
         const authors = snapshot.val() || {};  // Ensure author is an object to prevent errors
-
-        return { props: { authors } };
+        const filteredAuthors = Object.fromEntries(
+            Object.entries(authors).filter(([key, author]) => adminUsers.includes(key))
+        );
+        return { props: { authors: filteredAuthors } };
     } catch (error) {
         console.error('Error fetching author:', error);
         return { props: { authors: {} } }; // Return an empty object instead of an empty array

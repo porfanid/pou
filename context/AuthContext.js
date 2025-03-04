@@ -36,11 +36,7 @@ export const AuthProvider = ({ children }) => {
                     if (!response.ok) throw new Error("Failed to fetch claims");
 
                     const data = await response.json();
-                    console.log("Custom Claims:", data.customClaims); // Debugging
-                    const isAuthor = data.customClaims.admin;
-
-                    `authors/${firebaseUser.uid}`
-                    const userPath = isAuthor ? `authors/${firebaseUser.uid}` : `users/${firebaseUser.uid}`;
+                    const userPath = `users/${firebaseUser.uid}`;
 
                     const userExistsInDb = await checkIfReferenceExists(userPath);
 
@@ -98,7 +94,7 @@ export const AuthProvider = ({ children }) => {
 
             setRoles(userRoles);
 
-            const notificationsRef = ref(database, `/${userRoles.isAuthor ? 'authors' : 'users'}/${user.uid}/notifications`);
+            const notificationsRef = ref(database, `users/${user.uid}/notifications`);
             onValue(notificationsRef, (notificationsSnapshot) => {
                 const notificationsData = notificationsSnapshot.val();
                 const notifications = notificationsData ? Object.values(notificationsData) : [];

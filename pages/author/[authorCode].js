@@ -7,9 +7,18 @@ export async function getServerSideProps({ params }) {
     const admin = require("../../firebase/adminConfig");
     const database = await admin.database();
 
-    let authorRef = database.ref(`authors/${authorCode}`);
+    let authorRef = database.ref(`users/${authorCode}`);
     let snapshot = await authorRef.once("value");
-    let authorData = snapshot.exists() ? snapshot.val() : null;
+    let authorData = null;
+    if(snapshot.exists()) {
+        authorData = snapshot.val();
+    }else{
+        authorRef = database.ref(`users/${authorCode}`);
+        snapshot = await authorRef.once("value");
+        if(snapshot.exists()) {
+            authorData = snapshot.val();
+        }
+    }
 
     if (!authorData) {
         authorRef = database.ref(`users/${authorCode}`);

@@ -5,12 +5,15 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import logo from "./PulseOfTheUnderground_800x800.jpg";
+import {useAuth} from "../../context/AuthContext";
 
-const AppNavigation = ({ menuVisible, user, roles, notifications }) => {
+const AppNavigation = () => {
     const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
     const [menuOpen, setMenuOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [articlesDropdownOpen, setArticlesDropdownOpen] = useState(false);
+    const {user, roles, notifications} = useAuth();
+
 
     useEffect(() => {
         if (user) {
@@ -69,6 +72,11 @@ const AppNavigation = ({ menuVisible, user, roles, notifications }) => {
                             {roles&&roles.isAuthor && (
                                 <Link className="block text-gray-300 hover:text-red-500 p-2" href="/article/upload">
                                     Upload
+                                </Link>
+                            )}
+                            {roles&&roles.isAuthor && (
+                                <Link className="block text-gray-300 hover:text-red-500 p-2" href="/article/admin">
+                                    Admin
                                 </Link>
                             )}
                         </div>

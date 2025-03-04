@@ -1,11 +1,17 @@
-import React, { useState, useCallback } from "react";
+import React, {useState, useCallback, useEffect} from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
 import DraftEditor from "../../components/editor/editor";
-import { EditorState } from "draft-js";
+import {convertToRaw, EditorState} from "draft-js";
 import Select from "react-select";
+import {useAuth} from "../../context/AuthContext";
+import {config} from "../../firebase/config";
+import { getValue } from "firebase/remote-config";
 
 const ArticleUpload = () => {
+
+    const { user, userAuth, roles } = useAuth();
+
     const [title, setTitle] = useState("");
     const [details, setDetails] = useState("");
     const [category, setCategory] = useState("");
@@ -15,11 +21,28 @@ const ArticleUpload = () => {
     const [message, setMessage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
+    const [canUpload, setCanUpload] = useState(false);
+    const [languageOptions, setLanguageOptions] = useState([]);
 
-    const languageOptions = [
-        { value: "en", label: "English" },
-        { value: "el", label: "Greek" },
-    ];
+    useEffect(() => {
+        if(!roles) return;
+        if(!roles.isAuthor){
+            setMessage({ type: "error", text: "You are not authorized to upload articles." });
+            return;
+        }
+        setCanUpload(true);
+    }, [roles]);
+
+    useEffect(() => {
+        const languages = getValue(config, "languages").asString();
+        const parsedLanguages=Object.entries(JSON.parse(languages)).map(([key, value]) => {
+            return{
+                value: key,
+                label: value
+            }
+        })
+        setLanguageOptions(parsedLanguages);
+    }, []);
 
     const onDrop = useCallback((acceptedFiles) => {
         if (acceptedFiles.length > 0) {
@@ -39,6 +62,10 @@ const ArticleUpload = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if(!canUpload) {
+            setMessage({ type: "error", text: "You are not authorized to upload articles." });
+            return;
+        }
         setLoading(true);
         setMessage(null);
 
@@ -48,14 +75,17 @@ const ArticleUpload = () => {
             return;
         }
 
+        const contentState = editorState.getCurrentContent();
+
         const formData = new FormData();
         formData.append("title", title);
         formData.append("details", details);
         formData.append("category", category);
-        formData.append("language", language);
+        formData.append("lang", language);
         formData.append("socials", JSON.stringify(socials));
         formData.append("image", image);
-        formData.append("uid", localStorage.getItem("uid"));
+        formData.append("sub", user.uid);
+        formData.append("content", convertToRaw(contentState));
 
         try {
             const response = await axios.post("https://your-backend.com/api/upload-article", formData, {

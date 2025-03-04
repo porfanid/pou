@@ -67,7 +67,7 @@ const SavedArticleData = (props) => {
                         {props.article}
                     </h5>
                     <p className="text-gray-400">This article is not saved</p>
-                    <Link className="block text-center mt-3 py-2 px-4 text-sm font-bold text-gray-200 uppercase border border-red-600 rounded-lg bg-red-800 hover:bg-red-600 hover:border-red-400 transition-all duration-300 shadow-lg shadow-red-900" to={`/article/${props.article}`}>
+                    <Link className="block text-center mt-3 py-2 px-4 text-sm font-bold text-gray-200 uppercase border border-red-600 rounded-lg bg-red-800 hover:bg-red-600 hover:border-red-400 transition-all duration-300 shadow-lg shadow-red-900" href={`/article/${props.article}`}>
                         Read More
                     </Link>
                 </div>

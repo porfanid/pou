@@ -19,6 +19,7 @@ const nextConfig = {
             "via.placeholder.com"
         ],
     },
+
 };
 
 export default nextConfig;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import axios from "axios";
-import { X, DollarSign } from "lucide-react";
+import { X} from "lucide-react";
 import stripeLogo from "./Stripe.png";
 
 const DonationWidget = () => {
@@ -50,7 +50,7 @@ const DonationWidget = () => {
                 hover:bg-red-600 hover:text-black transition-all"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                {isOpen ? <X size={24} /> : <DollarSign size={24} />}
+                {isOpen ? <X size={24} /> : "Donate"}
             </button>
 
             {isOpen && (

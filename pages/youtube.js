@@ -43,7 +43,7 @@ const Youtube = () => {
 
     return (
         <div className="container mx-auto mt-5 px-4">
-            <h1 className="text-4xl font-extrabold text-white text-center mb-8 tracking-widest uppercase drop-shadow-lg">YouTube Channel Videos</h1>
+            <h1 className="text-4xl font-extrabold text-white text-center mb-8 tracking-widest uppercase drop-shadow-lg">YouTube Channel</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {videos.map((video) => video.id.videoId && (
                     <div className="card bg-gray-900 text-white border-0 shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transform hover:scale-105 transition-all" key={video.id.videoId}>

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { auth, database, functions, storage } from "../../firebase/config";
+import { database, storage } from "../../firebase/config";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile, deleteUser, signOut } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { ref as databaseRef, update, remove, get } from "firebase/database";
 import { useRouter } from "next/router";
-import { httpsCallable } from "firebase/functions";
 import { useAuth } from "../../context/AuthContext"; // Import useAuth to get user and roles
 
 const UserProfile = () => {
@@ -83,7 +82,7 @@ const UserProfile = () => {
         const fetchUserData = async () => {
             try {
                 if(!user) return;
-                const userRef = databaseRef(database, `${roles&&roles.isAuthor ? 'authors' : 'users'}/${user.uid}`);
+                const userRef = databaseRef(database,  `users/${user.uid}`);
                 const snapshot = await get(userRef);
                 if (snapshot.exists()) {
                     console.log("User data have been fetched")
@@ -106,7 +105,7 @@ const UserProfile = () => {
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
-        const userRef = databaseRef(database, `${roles&&roles.isAuthor ? 'authors' : 'users'}/${user.uid}`);
+        const userRef = databaseRef(database, `users/${user.uid}`);
         try {
             if (profileImage) {
                 const imageRef = ref(storage, `profile_images/${user.uid}`);
@@ -128,7 +127,7 @@ const UserProfile = () => {
     const handleUpdateShipping = async (e) => {
         e.preventDefault();
         try {
-            const userRef = databaseRef(database, `${roles&&roles.isAuthor ? 'authors' : 'users'}/${user.uid}/shipping`);
+            const userRef = databaseRef(database, `users/${user.uid}/shipping`);
             await update(userRef, {
                 address: shippingAddress.trim(),
                 city: city.trim(),

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { auth, database } from "../../firebase/config";
-import {get, onValue, ref, ref as databaseRef} from "firebase/database";
+import { database } from "../../firebase/config";
+import {get, ref, ref as databaseRef} from "firebase/database";
 import SavedArticleData from "./articleData";
 import {useAuth} from "../../context/AuthContext";
 
@@ -9,31 +9,14 @@ const SavedArticles = () => {
     const [loading, setLoading] = useState(true);
     const user = useAuth();
 
-    async function checkIfReferenceExists(path) {
-        const reference = ref(database, path);
-        const snapshot = await get(reference);
-        return snapshot.exists();
-    }
-
     useEffect(() => {
         console.log("User:", user);
             if (user) {
-                let dataRef;
-                console.log(`authors/${user.uid}/savedArticles/`);
-                checkIfReferenceExists(`authors/${user.uid}`).then(async (exists) => {
-                    if (exists) {
-                        dataRef = databaseRef(database, `authors/${user.uid}/savedArticles/`);
-                    } else {
-                        dataRef = databaseRef(database, `users/${user.uid}/savedArticles/`);
-                    }
-
-                    console.log("User exists");
-
-                    get(dataRef).then(snapshot => {
-                        setData(snapshot.val());
-                        console.log(snapshot.val())
-                        setLoading(false);
-                    });
+                const dataRef = databaseRef(database, `users/${user.uid}/savedArticles/`);
+                get(dataRef).then(snapshot => {
+                    setData(snapshot.val());
+                    console.log(snapshot.val())
+                    setLoading(false);
                 });
             } else {
                 setData(null);

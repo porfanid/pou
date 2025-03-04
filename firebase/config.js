@@ -6,7 +6,7 @@ import { connectAuthEmulator, getAuth } from "firebase/auth";
 import { connectDatabaseEmulator, getDatabase } from "firebase/database";
 import { getMessaging } from "firebase/messaging";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
-import { getRemoteConfig } from "firebase/remote-config";
+import { getRemoteConfig, fetchAndActivate } from "firebase/remote-config";
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
@@ -25,6 +25,8 @@ const firebaseConfig = {
 
 // Initialize Firebase app
 const app = initializeApp(firebaseConfig);
+
+const isDev = process.env.NODE_ENV === 'development';
 
 // Initialize Firebase services
 let config, firestore, analytics, storage, auth, database, functions, firebaseMessaging;
@@ -52,7 +54,7 @@ if (typeof window !== "undefined") {
     }
 
     // Emulator setup (only in development)
-    const isDev = process.env.NODE_ENV === 'development';
+
     const useEmulators = process.env.REACT_APP_USE_EMULATORS === 'true';
     if (isDev && useEmulators) {
         const EMULATOR_HOST = "localhost";
@@ -62,8 +64,8 @@ if (typeof window !== "undefined") {
         connectStorageEmulator(storage, EMULATOR_HOST, 9199);
         connectFunctionsEmulator(functions, EMULATOR_HOST, 8443);
     }
-
-
+    config.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+    await fetchAndActivate(config);
 }
 
 // Cloud Functions for Firebase
@@ -86,5 +88,6 @@ export {
     sendPushoverNotification,
     handlePublishFunction,
     getYoutubeVideos,
-    generateRecording
+    generateRecording,
+    isDev,
 };

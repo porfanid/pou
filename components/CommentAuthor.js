@@ -16,26 +16,18 @@ export function CommentAuthor({ authorCode }) {
 
     useEffect(() => {
         const fetchUser = async () => {
-            const paths = ["authors", "users", "bands"];
+            const displayNameRef = child(ref(database), `users/${authorCode}/displayName`);
+            const photoURLRef = child(ref(database), `users/${authorCode}/photoURL`);
 
-            for (const path of paths) {
-                try {
-                    const displayNameRef = child(ref(database), `${path}/${authorCode}/displayName`);
-                    const photoURLRef = child(ref(database), `${path}/${authorCode}/photoURL`);
+            const displayNameSnap = await get(displayNameRef);
+            const photoURLSnap = await get(photoURLRef);
 
-                    const displayNameSnap = await get(displayNameRef);
-                    const photoURLSnap = await get(photoURLRef);
-
-                    if (displayNameSnap.exists() || photoURLSnap.exists()) {
-                        setUser({
-                            displayName: displayNameSnap.val() || authorCode, // Fallback to authorCode
-                            photoURL: photoURLSnap.exists() ? photoURLSnap.val() : null,
-                        });
-                        return;
-                    }
-                } catch (error) {
-                    console.error(`Firebase Error: ${error.message}`);
-                }
+            if (displayNameSnap.exists() || photoURLSnap.exists()) {
+                setUser({
+                    displayName: displayNameSnap.val() || authorCode, // Fallback to authorCode
+                    photoURL: photoURLSnap.exists() ? photoURLSnap.val() : null,
+                });
+                return;
             }
 
             setUser({ displayName: authorCode, photoURL: null }); // Default if not found

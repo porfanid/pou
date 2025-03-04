@@ -159,7 +159,7 @@ export default function ArticlePage({ article, error }) {
 
 
 async function getAuthor(authorCode, bucket, database) {
-    const author = await database.ref(`authors/${authorCode}`).once('value');
+    const author = await database.ref(`users/${authorCode}`).once('value');
     if (author.exists()) {
         const authorData = author.val();
         const imageRef = bucket.file(`/profile_images/${authorCode}_600x600`);
@@ -173,11 +173,10 @@ async function getAuthor(authorCode, bucket, database) {
     return authorCode;
 }
 
-// Server-side rendering to fetch article data
-export async function getServerSideProps(context) {
-    const { id } = context.params;
 
-    const admin = require('../../firebase/adminConfig');
+// Server-side rendering to fetch article data
+export async function getServerSidePropsGeneric(context, early, admin) {
+    const { id } = context.params;
 
     try {
         // Ensure admin SDK is available only on the server
@@ -188,7 +187,8 @@ export async function getServerSideProps(context) {
         const database = await admin.database();
 
         // Define the path to the article JSON file in Firebase Storage
-        const articlePath = `articles/${id}.json`;
+        const folder = early?"early_access":'articles';
+        const articlePath = `${folder}/${id}.json`;
 
         // Reference the file from the Firebase Storage bucket
         const file = bucket.file(articlePath);
@@ -197,7 +197,7 @@ export async function getServerSideProps(context) {
         const [fileContent] = await file.download();
 
         // Parse the content as JSON
-        const article = JSON.parse(fileContent.toString('utf8'));
+        const article = JSON.parse(fileContent.toString());
 
 
         const authorCode = article.sub;
@@ -215,7 +215,12 @@ export async function getServerSideProps(context) {
         return {
             props: { article },
         };
-    } catch (error) {
+    }catch (error) {
         return { props: { error: `Failed to load the article: ${error.message}` } };
     }
+}
+
+export async function getServerSideProps(context) {
+    const admin = require('../../firebase/adminConfig');
+    return await getServerSidePropsGeneric(context, false, admin);
 }

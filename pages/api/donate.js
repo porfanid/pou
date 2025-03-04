@@ -1,8 +1,7 @@
 // pages/api/donate.js
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-
-const isDev = process.env.NODE_ENV !== 'production';
+import {isDev} from "../../firebase/config"
 
 const stripe = new Stripe(isDev?process.env.STRIPE_SECRET_KEY_TEST:process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2022-11-15',
