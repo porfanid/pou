@@ -5,6 +5,7 @@ import {Noto_Serif} from "next/font/google";
 import Head from "next/head";
 import NProgress from 'nprogress';
 import Router from 'next/router';
+import LogoLink from "../components/navigation/PulseOfTheUnderground_800x800.jpg";
 
 const notoSerif = Noto_Serif({
     subsets: ["latin", "greek"],
@@ -25,10 +26,10 @@ export default function MyApp({Component, pageProps}) {
                 <title>Pulse Of The Underground</title>
                 <meta name="description"
                       content={"Stay brutal and explore the unknown metal news, reviews, and features!"}/>
-                <meta property="og:title" content={"About Us Pulse Of The Underground"}/>
+                <meta property="og:title" content={"Pulse Of The Underground"}/>
                 <meta property="og:description"
                       content={"Stay brutal and explore the unknown metal news, reviews, and features!"}/>
-                <meta property="og:image" content={"/assets/PulseOfTheUnderground.jpg"}/>
+                <meta property="og:image" content={LogoLink.src}/>
 
 
                 <link rel="apple-touch-icon" sizes="180x180" href="/favicon.io/apple-touch-icon.png"/>

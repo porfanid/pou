@@ -53,10 +53,13 @@ export default async function handler(req, res) {
         // Get updated file reference
         const updatedFile = bucket.file(filePath);
 
+        const oneDayLater = new Date();
+        oneDayLater.setDate(oneDayLater.getDate() + 1);
+
         // Generate a signed URL
         const [url] = await updatedFile.getSignedUrl({
             action: "read",
-            expires: "03-01-2025",
+            expires: oneDayLater.toISOString(),
         });
 
         // Redirect user to signed URL
