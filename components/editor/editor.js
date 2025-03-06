@@ -10,6 +10,76 @@ import { stateToHTML } from 'draft-js-export-html';
 const imagePlugin = createImagePlugin();
 const plugins = [imagePlugin];
 
+export const exportOptions = {
+    inlineStyles: {
+        BOLD: {element: 'strong', style: {color: '#af0000', fontWeight: 'bold'}},
+        RED_BOLD: {element: 'strong', style: {color: '#af0000', fontWeight: 'bold'}},
+        ITALIC: {element: 'em'},
+        UNDERLINE: {element: 'u'},
+        HIGHLIGHT: {element: 'span', style: {backgroundColor: '#900000'}},
+        SUPERSCRIPT: {element: 'sup'},
+        SUBSCRIPT: {element: 'sub'},
+        STRIKETHROUGH: {element: 's'},
+        CODE: {element: 'code', style: {display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.05)', fontFamily: 'monospace', padding: '0.5em'}},
+    },
+    blockStyleFn: (block) => {
+        const type = block.getType();
+        if (type === 'blockquote') {
+            return {
+                style: {
+                    borderLeft: '4px solid #dc2626',
+                    paddingLeft: '1rem',
+                    fontStyle: 'italic',
+                    fontSize: '1.25rem',
+                    color: '#ffffff'
+                }
+            };
+        }
+        if (type === 'code-block') {
+            return {
+                element: 'pre',
+                style: {
+                    fontFamily: 'monospace',
+                    backgroundColor: '#f8cecc',
+                    padding: '1em',
+                    borderRadius: '0.375rem'
+                }
+            };
+        }
+        if (type.startsWith('header-')) {
+            const level = type.charAt(7);
+            return {
+                element: `h${level}`,
+                style: level === '1' ? { fontFamily: 'var(--font-heading), serif' } : {}
+            };
+        }
+        // Add text alignment styles
+        if (type === 'leftAlign') {
+            return {
+                style: { textAlign: 'left', color: '#c3c3c3' }
+            };
+        }
+        if (type === 'centerAlign') {
+            return {
+                style: { textAlign: 'center', color: '#c3c3c3' }
+            };
+        }
+        if (type === 'rightAlign') {
+            return {
+                style: { textAlign: 'right', color: '#c3c3c3' }
+            };
+        }
+        if (type === 'justifyAlign') {
+            return {
+                style: { textAlign: 'justify', color: '#c3c3c3' }
+            };
+        }
+        return {
+            style: { color: '#c3c3c3' } // Default text color
+        };
+    }
+}
+
 const DraftEditor = ({editorState, setEditorState}) => {
 
     const editor = useRef(null);
@@ -186,77 +256,6 @@ const DraftEditor = ({editorState, setEditorState}) => {
                 return "text-text"; // Default text color from tailwind
         }
     };
-
-    // Custom options for HTML export
-    const exportOptions = {
-        inlineStyles: {
-            BOLD: {element: 'strong', style: {color: '#af0000', fontWeight: 'bold'}},
-            RED_BOLD: {element: 'strong', style: {color: '#af0000', fontWeight: 'bold'}},
-            ITALIC: {element: 'em'},
-            UNDERLINE: {element: 'u'},
-            HIGHLIGHT: {element: 'span', style: {backgroundColor: '#900000'}},
-            SUPERSCRIPT: {element: 'sup'},
-            SUBSCRIPT: {element: 'sub'},
-            STRIKETHROUGH: {element: 's'},
-            CODE: {element: 'code', style: {display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.05)', fontFamily: 'monospace', padding: '0.5em'}},
-        },
-        blockStyleFn: (block) => {
-            const type = block.getType();
-            if (type === 'blockquote') {
-                return {
-                    style: {
-                        borderLeft: '4px solid #dc2626',
-                        paddingLeft: '1rem',
-                        fontStyle: 'italic',
-                        fontSize: '1.25rem',
-                        color: '#ffffff'
-                    }
-                };
-            }
-            if (type === 'code-block') {
-                return {
-                    element: 'pre',
-                    style: {
-                        fontFamily: 'monospace',
-                        backgroundColor: '#f8cecc',
-                        padding: '1em',
-                        borderRadius: '0.375rem'
-                    }
-                };
-            }
-            if (type.startsWith('header-')) {
-                const level = type.charAt(7);
-                return {
-                    element: `h${level}`,
-                    style: level === '1' ? { fontFamily: 'var(--font-heading), serif' } : {}
-                };
-            }
-            // Add text alignment styles
-            if (type === 'leftAlign') {
-                return {
-                    style: { textAlign: 'left', color: '#c3c3c3' }
-                };
-            }
-            if (type === 'centerAlign') {
-                return {
-                    style: { textAlign: 'center', color: '#c3c3c3' }
-                };
-            }
-            if (type === 'rightAlign') {
-                return {
-                    style: { textAlign: 'right', color: '#c3c3c3' }
-                };
-            }
-            if (type === 'justifyAlign') {
-                return {
-                    style: { textAlign: 'justify', color: '#c3c3c3' }
-                };
-            }
-            return {
-                style: { color: '#c3c3c3' } // Default text color
-            };
-        }
-    }
 
     return (
         <div className="mt-2 p-3 w-full bg-background border border-red-600 rounded-lg text-text focus:ring-2 focus:ring-red-500" onClick={focusEditor}>

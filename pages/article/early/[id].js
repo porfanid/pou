@@ -1,4 +1,5 @@
-import ArticlePage, {getServerSidePropsGeneric}  from "../[id]";
+import ArticlePage  from "../[id]";
+import { getServerSidePropsGeneric } from "../../../components/pages/article/getData";
 
 
 export default ArticlePage;

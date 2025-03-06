@@ -1,7 +1,7 @@
 import React from "react";
 import { FaFacebook, FaInstagram, FaTwitter, FaEnvelope, FaSpotify } from "react-icons/fa";
 import Image from "next/image";
-import logo from "../components/PulseOfTheUnderground_800x800.jpg"; // Change this to your logo
+import logo from "../components/navigation/PulseOfTheUnderground_800x800.jpg"; // Change this to your logo
 
 import reddit_gif from "../components/social_icons/./redit_100x100.gif"
 import facebook_gif from "../components/social_icons/Facebook_100x100.gif"

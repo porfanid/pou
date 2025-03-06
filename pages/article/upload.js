@@ -1,28 +1,50 @@
 import React, {useState, useCallback, useEffect} from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
-import DraftEditor from "../../components/editor/editor";
+import DraftEditor, {exportOptions} from "../../components/editor/editor";
 import {convertToRaw, EditorState} from "draft-js";
 import Select from "react-select";
 import {useAuth} from "../../context/AuthContext";
 import {config} from "../../firebase/config";
 import { getValue } from "firebase/remote-config";
+import slugify from 'slugify';
+import {stateToHTML} from "draft-js-export-html"; // You'll need to install slugify package
 
 const ArticleUpload = () => {
-
     const { user, userAuth, roles } = useAuth();
 
     const [title, setTitle] = useState("");
     const [details, setDetails] = useState("");
+    const [slug, setSlug] = useState("");
     const [category, setCategory] = useState("");
     const [language, setLanguage] = useState("en");
-    const [socials, setSocials] = useState({ facebook: "", instagram: "", youtube: "", spotify: "" });
+    const [socials, setSocials] = useState({
+        facebook: "",
+        instagram: "",
+        spotify: "",
+        youtube: ""
+    });
     const [image, setImage] = useState(null);
     const [message, setMessage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
     const [canUpload, setCanUpload] = useState(false);
     const [languageOptions, setLanguageOptions] = useState([]);
+    const [writtenDate, setWrittenDate] = useState("");
+    const [isReady, setIsReady] = useState(false);
+    const [hasBeenEdited, setHasBeenEdited] = useState(false);
+
+    // Auto-generate slug when title changes
+    useEffect(() => {
+        const generatedSlug = slugify(title, {
+            lower: true,      // convert to lowercase
+            strict: true,     // strip special characters
+            trim: true        // trim leading and trailing replacement chars
+        });
+        if(!hasBeenEdited) {
+            setSlug(generatedSlug);
+        }
+    }, [title]);
 
     useEffect(() => {
         if(!roles) return;
@@ -35,12 +57,10 @@ const ArticleUpload = () => {
 
     useEffect(() => {
         const languages = getValue(config, "languages").asString();
-        const parsedLanguages=Object.entries(JSON.parse(languages)).map(([key, value]) => {
-            return{
-                value: key,
-                label: value
-            }
-        })
+        const parsedLanguages = Object.entries(JSON.parse(languages)).map(([key, value]) => ({
+            value: key,
+            label: value
+        }));
         setLanguageOptions(parsedLanguages);
     }, []);
 
@@ -80,15 +100,18 @@ const ArticleUpload = () => {
         const formData = new FormData();
         formData.append("title", title);
         formData.append("details", details);
+        formData.append("slug", slug);
         formData.append("category", category);
         formData.append("lang", language);
         formData.append("socials", JSON.stringify(socials));
         formData.append("image", image);
         formData.append("sub", user.uid);
-        formData.append("content", convertToRaw(contentState));
+        formData.append("content", stateToHTML(contentState, exportOptions));
+        formData.append("writtenDate", writtenDate);
+        formData.append("isReady", isReady);
 
         try {
-            const response = await axios.post("https://your-backend.com/api/upload-article", formData, {
+            const response = await axios.post("/api/upload-article", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             setMessage({ type: "success", text: response.data.message });
@@ -110,8 +133,32 @@ const ArticleUpload = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <label className="block text-lg font-semibold text-red-400">Title</label>
-                    <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" />
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                        className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500"
+                    />
                 </div>
+
+                {/* Updated slug display to be on one line */}
+                <div className="mt-1 text-sm text-gray-400 min-w-fit truncate">
+                    <span className="font-medium">Link: </span>
+                    <span className="inline-flex items-center">
+                        https://pulse-of-the-underground.com/article/{' '}
+                        <input
+                            type="text"
+                            value={slug}
+                            onChange={(e) => {
+                                setSlug(e.target.value);
+                                setHasBeenEdited(true);
+                            }}
+                            className="bg-transparent border-2 text-gray-400 focus:outline-none focus:ring-0 w-auto ml-1"
+                        />
+                    </span>
+                </div>
+
 
                 <div>
                     <label className="block text-lg font-semibold text-red-400">Content</label>
@@ -121,7 +168,13 @@ const ArticleUpload = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-lg font-semibold text-red-400">Category</label>
-                        <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" />
+                        <input
+                            type="text"
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            required
+                            className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500"
+                        />
                     </div>
                     <div>
                         <label className="block text-lg font-semibold text-red-400">Language</label>
@@ -134,28 +187,48 @@ const ArticleUpload = () => {
                             styles={{
                                 control: (provided) => ({
                                     ...provided,
-                                    backgroundColor: '#1f2937', // Tailwind bg-gray-900
-                                    borderColor: '#b91c1c', // Tailwind border-red-600
-                                    color: '#f00', // Tailwind text-white
+                                    backgroundColor: '#1f2937',
+                                    borderColor: '#b91c1c',
+                                    color: '#f00',
                                 }),
                                 menu: (provided) => ({
                                     ...provided,
-                                    backgroundColor: '#1f2937', // Tailwind bg-gray-900
+                                    backgroundColor: '#1f2937',
                                     color: '#f00',
                                 }),
                                 singleValue: (provided) => ({
                                     ...provided,
-                                    color: '#ffffff', // Tailwind text-white
+                                    color: '#ffffff',
                                     backgroundColor: '#1f2937',
                                 }),
                                 option: (provided, state) => ({
                                     ...provided,
-                                    backgroundColor: state.isSelected ? '#791c1c' : state.isFocused ? '#471b1b' : '#1f2937', // Tailwind bg-red-600 for selected, darker red for hover, bg-gray-900 for others
-                                    color: state.isSelected ? '#ffffff' : '#ffffff', // Tailwind text-white
+                                    backgroundColor: state.isSelected ? '#791c1c' : state.isFocused ? '#471b1b' : '#1f2937',
+                                    color: state.isSelected ? '#ffffff' : '#ffffff',
                                 })
                             }}
                         />
                     </div>
+                </div>
+
+                <div>
+                    <label className="block text-lg font-semibold text-red-400">Written Date</label>
+                    <input
+                        type="date"
+                        value={writtenDate}
+                        onChange={(e) => setWrittenDate(e.target.value)}
+                        className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500"
+                    />
+                </div>
+
+                <div className="flex items-center">
+                    <input
+                        type="checkbox"
+                        checked={isReady}
+                        onChange={(e) => setIsReady(e.target.checked)}
+                        className="mr-2 text-red-600 focus:ring-red-500"
+                    />
+                    <label className="text-lg font-semibold text-red-400">Is Article Ready?</label>
                 </div>
 
                 <div>
@@ -187,7 +260,11 @@ const ArticleUpload = () => {
                     )}
                 </div>
 
-                <button type="submit" disabled={loading} className="w-full bg-red-700 hover:bg-red-900 text-white font-bold py-3 px-5 rounded-xl text-lg tracking-widest transition">
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-red-700 hover:bg-red-900 text-white font-bold py-3 px-5 rounded-xl text-lg tracking-widest transition"
+                >
                     {loading ? "Uploading..." : "Submit Article"}
                 </button>
             </form>

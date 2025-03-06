@@ -12,11 +12,10 @@ const SocialBar = ({ articleTitle }) => {
     const [currentPage, setCurrentPage] = useState("");
 
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const fullUrl = window.location.href;
-            console.log("Current Page URL:", fullUrl);  // Debugging URL
-            setCurrentPage(fullUrl);
-        }
+        const hostname = "https://pulse-of-the-underground.com";
+        const fullUrl = `${hostname}${router.asPath}`;
+        console.log("Current Page URL:", fullUrl);  // Debugging URL
+        setCurrentPage(fullUrl);
     }, [router.asPath]);
 
     // Share message

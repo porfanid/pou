@@ -5,8 +5,9 @@ import Image from "next/image";
 import AuthorOfArticle from "../../components/pages/article/AuthorOfArticle";
 import { FaFacebook, FaSpotify, FaInstagram, FaYoutube } from 'react-icons/fa';
 import Link from 'next/link';
+import {getServerSidePropsGeneric} from "../../components/pages/article/getData";
 
-export default function ArticlePage({ article, error }) {
+export default function ArticlePage({ article, error, metatags }) {
     if (error) {
         return <p>{error}</p>;
     }
@@ -19,14 +20,6 @@ export default function ArticlePage({ article, error }) {
 
     return (
         <>
-            <Head>
-                <title>{title}</title>
-                <meta name="description" content={description} />
-                <meta property="og:title" content={title} />
-                <meta property="og:description" content={description} />
-                <meta property="og:image" content={encodeURI(img01)} />
-                <meta property="og:type" content="article" />
-            </Head>
             <article className="max-w-7xl mx-auto p-4">
                 <h1 className="mt-10 mb-10 text-4xl md:text-5xl font-extrabold text-transparent bg-gradient-to-r from-titleStart to-titleRed bg-clip-text text-center animate-gradient-animation">
                     {title}
@@ -93,7 +86,7 @@ export default function ArticlePage({ article, error }) {
                         {/* Blurred Frame */}
                         <div className="absolute inset-0 bg-gray-500 opacity-25 rounded-lg backdrop-blur-lg z-10" />
                         <div
-                            className="prose max-w-none relative z-20 break-words break-all overflow-hidden"
+                            className="prose max-w-none relative z-20 break-words break-all overflow-hidden text-white"
                             dangerouslySetInnerHTML={{ __html: content }}
                         />
 
@@ -158,67 +151,9 @@ export default function ArticlePage({ article, error }) {
 
 
 
-async function getAuthor(authorCode, bucket, database) {
-    const author = await database.ref(`users/${authorCode}`).once('value');
-    if (author.exists()) {
-        const authorData = author.val();
-        const imageRef = bucket.file(`/profile_images/${authorCode}_600x600`);
-        try {
-            authorData.photoURL = await imageRef.getDownloadURL();
-        } catch (e) {
-            authorData.wantToShow = false;
-        }
-        return {...authorData, code: authorCode};
-    }
-    return authorCode;
-}
-
 
 // Server-side rendering to fetch article data
-export async function getServerSidePropsGeneric(context, early, admin) {
-    const { id } = context.params;
 
-    try {
-        // Ensure admin SDK is available only on the server
-        if (!admin) {
-            return { notFound: true }; // Admin SDK shouldn't run on client
-        }
-        const bucket = await admin.storage();
-        const database = await admin.database();
-
-        // Define the path to the article JSON file in Firebase Storage
-        const folder = early?"early_access":'articles';
-        const articlePath = `${folder}/${id}.json`;
-
-        // Reference the file from the Firebase Storage bucket
-        const file = bucket.file(articlePath);
-
-        // Download the file content as a string
-        const [fileContent] = await file.download();
-
-        // Parse the content as JSON
-        const article = JSON.parse(fileContent.toString());
-
-
-        const authorCode = article.sub;
-        article.sub = await getAuthor(authorCode, bucket, database);
-
-        if(article.translatedBy){
-            const translatorCode = article.translatedBy;
-            article.translatedBy = await getAuthor(translatorCode, bucket, database);
-        }
-
-        if (!article) {
-            return { notFound: true }; // Trigger 404 if the article doesn't exist
-        }
-
-        return {
-            props: { article },
-        };
-    }catch (error) {
-        return { props: { error: `Failed to load the article: ${error.message}` } };
-    }
-}
 
 export async function getServerSideProps(context) {
     const admin = require('../../firebase/adminConfig');

@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import logo from "../PulseOfTheUnderground_800x800.jpg";
+import logo from "../navigation/PulseOfTheUnderground_800x800.jpg";
 import skull_svg from "./Skull_and_Crossbones.svg";
 
 const Skull=()=> {

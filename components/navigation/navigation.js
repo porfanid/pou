@@ -90,7 +90,7 @@ const AppNavigation = () => {
                         <div className="relative">
                             <button className="flex items-center text-gray-400 hover:text-red-600 transition-all duration-300"
                                     onClick={() => setDropdownOpen(!dropdownOpen)}>
-                                <Image height={100} width={100} src={user.photoURL || "https://via.placeholder.com/50"}
+                                <Image height={100} width={100} src={user.photoURL}
                                      alt="Profile" className={`w-10 h-10 rounded-full ${user.photoURL&&"border-2"} border-gray-600 shadow-lg`} />
                                 {unreadNotificationsCount > 0 && (
                                     <span className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold rounded-full px-1 shadow-lg">

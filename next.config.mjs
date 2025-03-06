@@ -16,7 +16,8 @@ const nextConfig = {
             'heavy-local.com',
             "lh3.googleusercontent.com",
             "i.ytimg.com",
-            "via.placeholder.com"
+            "via.placeholder.com",
+            "storage.googleapis.com"
         ],
     },
 
