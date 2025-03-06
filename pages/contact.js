@@ -1,5 +1,5 @@
 import React from "react";
-import { FaFacebook, FaInstagram, FaTwitter, FaEnvelope, FaSpotify } from "react-icons/fa";
+import { FaEnvelope } from "react-icons/fa";
 import Image from "next/image";
 import logo from "../components/navigation/PulseOfTheUnderground_800x800.jpg"; // Change this to your logo
 

@@ -2,16 +2,17 @@ import React, {useState, useCallback, useEffect} from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
 import DraftEditor, {exportOptions} from "../../components/editor/editor";
-import {convertToRaw, EditorState} from "draft-js";
+import { EditorState} from "draft-js";
 import Select from "react-select";
 import {useAuth} from "../../context/AuthContext";
 import {config} from "../../firebase/config";
 import { getValue } from "firebase/remote-config";
 import slugify from 'slugify';
 import {stateToHTML} from "draft-js-export-html"; // You'll need to install slugify package
+import Head from "next/head"
 
 const ArticleUpload = () => {
-    const { user, userAuth, roles } = useAuth();
+    const { user,roles } = useAuth();
 
     const [title, setTitle] = useState("");
     const [details, setDetails] = useState("");
@@ -30,9 +31,9 @@ const ArticleUpload = () => {
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
     const [canUpload, setCanUpload] = useState(false);
     const [languageOptions, setLanguageOptions] = useState([]);
-    const [writtenDate, setWrittenDate] = useState("");
     const [isReady, setIsReady] = useState(false);
     const [hasBeenEdited, setHasBeenEdited] = useState(false);
+    const [categories, setCategories] = useState([]);
 
     // Auto-generate slug when title changes
     useEffect(() => {
@@ -62,6 +63,15 @@ const ArticleUpload = () => {
             label: value
         }));
         setLanguageOptions(parsedLanguages);
+
+        const categories = getValue(config, "categories").asString();
+        console.log(categories);
+        const parsedCategories = JSON.parse(categories).map((category) => ({
+            value: category,
+            label: category
+        }));
+        console.log(parsedCategories)
+        setCategories(parsedCategories);
     }, []);
 
     const onDrop = useCallback((acceptedFiles) => {
@@ -107,11 +117,10 @@ const ArticleUpload = () => {
         formData.append("image", image);
         formData.append("sub", user.uid);
         formData.append("content", stateToHTML(contentState, exportOptions));
-        formData.append("writtenDate", writtenDate);
         formData.append("isReady", isReady);
 
         try {
-            const response = await axios.post("/api/upload-article", formData, {
+            const response = await axios.post("/api/article/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             setMessage({ type: "success", text: response.data.message });
@@ -124,6 +133,9 @@ const ArticleUpload = () => {
 
     return (
         <div className="max-w-3xl mx-auto p-6 sm:p-8 bg-gray-950 text-white rounded-2xl shadow-2xl border border-red-700 mt-10 w-full">
+            <Head>
+                <title>Upload article</title>
+            </Head>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-red-600 mb-6 uppercase tracking-widest text-center">Upload Your Metal Article</h2>
             {message && (
                 <div className={`p-4 rounded-lg text-center font-bold ${message.type === "success" ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"}`}>
@@ -154,7 +166,7 @@ const ArticleUpload = () => {
                                 setSlug(e.target.value);
                                 setHasBeenEdited(true);
                             }}
-                            className="bg-transparent border-2 text-gray-400 focus:outline-none focus:ring-0 w-auto ml-1"
+                            className="bg-transparent border border-1 border-red-500 text-gray-400 focus:outline-none focus:ring-0 w-auto ml-1"
                         />
                     </span>
                 </div>
@@ -168,13 +180,38 @@ const ArticleUpload = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-lg font-semibold text-red-400">Category</label>
-                        <input
-                            type="text"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            required
-                            className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500"
+
+                        <Select
+                            value={categories.find(option => option.value === category)}
+                            onChange={(selectedOption) => setCategory(selectedOption.value)}
+                            options={categories}
+                            className="mt-2"
+                            classNamePrefix="react-select"
+                            styles={{
+                                control: (provided) => ({
+                                    ...provided,
+                                    backgroundColor: '#1f2937',
+                                    borderColor: '#b91c1c',
+                                    color: '#f00',
+                                }),
+                                menu: (provided) => ({
+                                    ...provided,
+                                    backgroundColor: '#1f2937',
+                                    color: '#f00',
+                                }),
+                                singleValue: (provided) => ({
+                                    ...provided,
+                                    color: '#ffffff',
+                                    backgroundColor: '#1f2937',
+                                }),
+                                option: (provided, state) => ({
+                                    ...provided,
+                                    backgroundColor: state.isSelected ? '#791c1c' : state.isFocused ? '#471b1b' : '#1f2937',
+                                    color: state.isSelected ? '#ffffff' : '#ffffff',
+                                })
+                            }}
                         />
+
                     </div>
                     <div>
                         <label className="block text-lg font-semibold text-red-400">Language</label>
@@ -209,16 +246,6 @@ const ArticleUpload = () => {
                             }}
                         />
                     </div>
-                </div>
-
-                <div>
-                    <label className="block text-lg font-semibold text-red-400">Written Date</label>
-                    <input
-                        type="date"
-                        value={writtenDate}
-                        onChange={(e) => setWrittenDate(e.target.value)}
-                        className="mt-2 p-3 w-full bg-gray-900 border border-red-600 rounded-lg text-white focus:ring-2 focus:ring-red-500"
-                    />
                 </div>
 
                 <div className="flex items-center">

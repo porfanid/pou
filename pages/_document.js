@@ -1,5 +1,4 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document';
-import { getServerSidePropsGeneric } from "../components/pages/article/getData";
 
 class MyDocument extends Document {
 
@@ -9,9 +8,7 @@ class MyDocument extends Document {
 
         const initialProps = await Document.getInitialProps(ctx);
 
-        console.log("Meta Tags: ",ctx.req.metaTags);
-
-        return { ...initialProps, metaTags: ctx.req.metaTags || {
+        return { ...initialProps, metaTags: ctx?.req?.metaTags || {
             title: "Pulse Of The Underground",
             description: "Stay brutal and explore the unknown metal news, reviews, and features!",
             image: "/path/to/default/image.jpg",

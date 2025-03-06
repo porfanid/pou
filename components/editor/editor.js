@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { EditorState, RichUtils, convertToRaw, convertFromRaw, Modifier } from "draft-js";
+import React, { useEffect, useRef, } from "react";
+import { EditorState, RichUtils, convertToRaw, Modifier } from "draft-js";
 import Toolbar from "./toolbar";
 import createImagePlugin from "@draft-js-plugins/image";
 import Editor from "@draft-js-plugins/editor";

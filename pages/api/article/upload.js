@@ -1,8 +1,6 @@
-const admin = require("../../firebase/adminConfig");
+const admin = require("../../../firebase/adminConfig");
 
-import { getStorage } from 'firebase-admin/storage';
-import { getDatabase } from 'firebase-admin/database';
-import { getAuth } from 'firebase-admin/auth';
+
 import {IncomingForm} from 'formidable';
 import fs from 'fs';
 
@@ -15,6 +13,7 @@ export const config = {
 
 export default async function handler(req, res) {
     // Initialize Firebase Admin (only if not already initialized)
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -67,9 +66,6 @@ export default async function handler(req, res) {
                         contentType: imageFile.mimetype || 'image/jpeg'
                     }
                 });
-
-
-
                 imageUrl = `https://pulse-of-the-underground.com/assets/${sanitizedSlug}`;
             }
 
@@ -77,13 +73,29 @@ export default async function handler(req, res) {
             const articleData = {
                 title,
                 details,
-                content: articleContent.replace(/<[^>]*style="[^"]*color:\s*[^";]*;?[^"]*"[^>]*>/g, ''),
+                content: articleContent,
                 category,
                 socials,
                 language,
                 sub: uid,
                 img01: imageUrl,
-                slug: sanitizedSlug
+                slug: sanitizedSlug,
+                date: new Date().toLocaleDateString('en-GB', options),
+                authorApproved: true,
+                isReady: true,
+            };
+
+
+            const articleMetadata = {
+                title,
+                details,
+                category,
+                socials,
+                language,
+                sub: uid,
+                img01: imageUrl,
+                slug: sanitizedSlug,
+                date: new Date().toLocaleDateString('en-GB', options),
             };
 
             // Upload article JSON to Firebase Storage
@@ -92,11 +104,18 @@ export default async function handler(req, res) {
                 contentType: "application/json",
             });
 
+            // Save article data to Firebase Realtime Database
+            const articlesRef = database.ref(`articlesList/upload_from_authors/${category}/${sanitizedSlug}`);
+            await articlesRef.set(articleMetadata);
+
+
+
+
             // Notify admins/leaders (you'll need to implement this part)
             const rolesRef = database.ref("roles");
             const rolesSnapshot = await rolesRef.get();
             if (rolesSnapshot.exists()) {
-                const { admin, authorLeader } = rolesSnapshot.val();
+                //const { admin, authorLeader } = rolesSnapshot.val();
                 // Implement notification logic here
             }
 

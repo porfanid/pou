@@ -1,4 +1,3 @@
-import Head from 'next/head';
 import SocialBar from '../../components/SocialShare';
 import Comments from '../../components/Comments';
 import Image from "next/image";

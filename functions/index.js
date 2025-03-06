@@ -1,56 +1,58 @@
-import { onAuthUserCreate, onAuthUserSignIn } from "firebase-functions/v2/identity";
-import { getDatabase, ServerValue } from "firebase-admin/database";
-import { initializeApp } from "firebase-admin/app";
-import axios from "axios";
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const axios = require("axios");
+const serviceAccount = require("./heavy-local-admin.json")
 
-initializeApp();
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    storageBucket: 'heavy-local-12bc4', // Replace with your Firebase Storage bucket URL
+    databaseURL: 'https://heavy-local-12bc4-default-rtdb.firebaseio.com', // Replace with your Firebase Realtime Database URL
+});
 
-const IP_API_KEY = process.env.IP_API_KEY; // Load from .env
+exports.addUserToDatabase = functions.identity.beforeUserCreated(async (event) => {
 
-export const syncNewUserToDatabase = onAuthUserCreate(async (event) => {
     const { uid, email, displayName, photoURL } = event.data;
-
     const userData = {
         uid,
         email,
         displayName: displayName || "New User",
         photoURL: photoURL || "",
-        createdAt: ServerValue.TIMESTAMP,
+        createdAt: admin.database.ServerValue.TIMESTAMP,
     };
-
-    try {
-        await getDatabase().ref(`users/${uid}`).set(userData);
-        console.log(`✅ User ${uid} synced to database.`);
-    } catch (error) {
-        console.error(`❌ Error syncing user ${uid}:`, error);
-    }
+    const userRef = admin.database().ref(`users/${user.uid}`)
+    const data = userRef.set(userData, { merge: true });
+    data.then(console.log).catch(console.error);
 });
 
-export const logLoginAttempt = onAuthUserSignIn(async (event) => {
-    const { uid, ipAddress } = event.data;
-    if (!uid || !ipAddress) return;
+exports.syncNewUserToDatabase = functions.identity.beforeUserSignedIn({timeoutSeconds: 540}, async (event) => {
+    //user, context
+    const user = event.data;
+    const ipAddress = event.ipAddress;
 
-    try {
-        const url = `https://api.whatismyip.com/ip-address-lookup.php?key=${IP_API_KEY}&input=${ipAddress}`;
-        const response = await axios.get(url);
 
-        // Convert response to JSON
-        const locationData = response.data.split("\n").reduce((obj, line) => {
-            const [key, ...valueParts] = line.split(":");
-            if (key && valueParts.length) {
-                obj[key.trim()] = valueParts.join(":").trim();
-            }
-            return obj;
-        }, {});
+    if(!user) return;
+    const apiKey = process.env.IP;
 
-        // Save login attempt to Firebase
-        await getDatabase().ref(`users/${uid}/logins`).push({
-            loginAttempt: locationData,
-            timestamp: ServerValue.TIMESTAMP,
-        });
 
-        console.log(`✅ Login attempt logged for user ${uid}`);
-    } catch (error) {
-        console.error(`❌ Error logging login attempt for user ${uid}:`, error);
-    }
+    const url = `https://api.whatismyip.com/ip-address-lookup.php?key=${apiKey}&input=${ipAddress}`;
+    const response = await axios.get(url);
+    const textResponse = response.data;
+    const jsonResponse = textResponse.split('\n').reduce((obj, line) => {
+        const [key, ...valueParts] = line.split(':');
+        if (key && valueParts.length) {
+            obj[key.trim()] = valueParts.join(':').trim();
+        }
+        return obj;
+    }, {});
+
+    console.log(`users/${user.uid}/ip`);
+    console.log(jsonResponse)
+
+
+
+
+    const ref = admin.database().ref(`users/${user.uid}/ip`);
+    await ref.push({
+        loginAttempt: jsonResponse
+    });
 });
