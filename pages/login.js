@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { signInWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification, signOut } from "firebase/auth";
 import { auth } from "../firebase/config";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { onAuthStateChanged } from "firebase/auth";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -14,19 +14,18 @@ export default function Login() {
     const [showResetModal, setShowResetModal] = useState(false);
     const router = useRouter();
 
+    const {userAuth} = useAuth();
+
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                if (!user.emailVerified) {
-                    setShowResend(true);
-                } else {
-                    const redirectUrl = router.query?.redirect || "/";
-                    router.push(redirectUrl);
-                }
+        if (userAuth) {
+            if (!userAuth.emailVerified) {
+                setShowResend(true);
+            } else {
+                const redirectUrl = router.query?.redirect || "/";
+                router.push(redirectUrl);
             }
-        });
-        return () => unsubscribe();
-    }, [router]);
+        }
+    }, [userAuth]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -42,6 +41,7 @@ export default function Login() {
             }
         } catch (error) {
             setErrorMessage(error.message);
+            signOut(auth)
         } finally {
             setIsLoading(false);
         }

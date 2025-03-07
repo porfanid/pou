@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useRouter } from "next/router";
 import ResetPasswordForm from "../../components/auth/ResetPasswordForm";
 import VerifyEmailForm from "../../components/auth/VerifyEmailForm";
@@ -10,7 +10,6 @@ export default function ActionPage() {
 
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
-    const [email, setEmail] = useState("");
 
     const handleSuccess = (message) => {
         setSuccessMessage(message);

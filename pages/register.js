@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
 import { auth } from "../firebase/config";
-import { useRouter } from "next/router";
 import Link from "next/link";
 import RulesModal from "../components/RulesModal";
-import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
     const [email, setEmail] = useState("");

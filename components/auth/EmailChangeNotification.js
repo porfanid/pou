@@ -1,6 +1,5 @@
 import {checkActionCode, applyActionCode, sendPasswordResetEmail} from "firebase/auth";
 import {auth} from "../../firebase/config";
-import {useEffect} from "react";
 import {router} from "next/client";
 
 function EmailChangeNotification({ setSuccessMessage, setErrorMessage, oobCode }) {
@@ -17,17 +16,6 @@ function EmailChangeNotification({ setSuccessMessage, setErrorMessage, oobCode }
             setErrorMessage(error.message);
         }
     };
-
-    useEffect(() => {
-        if (oobCode) {
-            verifyPasswordResetCode(auth, oobCode)
-                .then((email) => {
-                })
-                .catch((error) => {
-                    setErrorMessage(error.message);
-                });
-        }
-    }, [oobCode]);
 
     return (
         <div className="p-8 rounded-xl shadow-2xl w-full max-w-md text-white">
