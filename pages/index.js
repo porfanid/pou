@@ -87,7 +87,6 @@ const HeroSection = () => {
 export async function getServerSideProps() {
     const admin = require('../firebase/adminConfig');
     const database = await admin.database();
-    const storage = await admin.storage();
 
     let allArticles = [];
     let categories = ['All'];
