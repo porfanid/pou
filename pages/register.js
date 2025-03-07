@@ -1,45 +1,36 @@
 import { useState, useEffect } from "react";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
 import { auth } from "../firebase/config";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import RulesModal from "../components/RulesModal";
-import {useAuth} from "../context/AuthContext"; // Make sure to import the modal
+import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [profileName, setProfileName] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [redirectTo, setRedirectTo] = useState("/");
-
-    const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
-
-    const router = useRouter();
-
-    const {user} = useAuth();
-
-    useEffect(() => {
-        if (user) {
-            // If the user is logged in, redirect them to the previous page or default page
-            const redirectUrl = router.query?.redirect || "/";
-            router.push(redirectUrl.toString()).then();  // Redirect to the stored redirect URL
-        }
-    }, [user]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setErrorMessage("");
+        setSuccessMessage("");
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(userCredential.user, {
-                displayName: profileName,
-            });
+            const newUser = userCredential.user;
 
-            router.push(redirectTo); // Redirect to previous page after successful registration
+            await updateProfile(newUser, { displayName: profileName });
+            await sendEmailVerification(newUser);
+
+            await signOut(auth); // Log the user out after sending the verification email
+
+            setSuccessMessage("Registration successful! A verification email has been sent. Please check your inbox.");
         } catch (error) {
             setErrorMessage(error.message);
         } finally {
@@ -107,6 +98,13 @@ export default function Register() {
                 {errorMessage && (
                     <div className="text-red-500 text-sm mb-4">
                         <p>{errorMessage}</p>
+                    </div>
+                )}
+
+                {/* Success Message */}
+                {successMessage && (
+                    <div className="text-green-500 text-sm mb-4">
+                        <p>{successMessage}</p>
                     </div>
                 )}
 

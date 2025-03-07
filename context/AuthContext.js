@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             console.log("Firebase User:", firebaseUser); // Debugging
-            if (firebaseUser) {
+            if (firebaseUser&&firebaseUser.emailVerified) {
                 setUserAuth(firebaseUser);
                 try {
                     const response = await fetch("/api/getCustomClaims", {
@@ -52,6 +52,9 @@ export const AuthProvider = ({ children }) => {
                         const userRef = ref(database, userPath);
                         unsubscribeUser = onValue(userRef, (snapshot) => {
                             userData = snapshot.val();
+                            if(!userData){
+                                userData = firebaseUser;
+                            }
                             userData.claims = data.customClaims;
                             userData.uid = firebaseUser.uid;
                             setUser(userData);
