@@ -94,3 +94,48 @@ exports.syncNewUserToDatabase = functions.identity.beforeUserSignedIn({ timeoutS
         return null;
     }
 });
+
+exports.updateLatestArticlesV2 = functions
+    .database.onValueUpdated('/articlesList/',async (event)=> {
+        await updateLatestArticles();
+    })
+
+const updateLatestArticles = async () => {
+    try {
+        const articlesListSnapshot = await database.ref(`/articlesList`).once('value');
+        const articlesList = articlesListSnapshot.val() || {};
+
+        const sevenDaysAgo = getSevenDaysAgo();
+        const latestArticles = {};
+
+        // Iterate over each directory in articlesList
+        Object.entries(articlesList).forEach(([directory, categories]) => {
+            latestArticles[directory] = latestArticles[directory] || {};
+
+            // Iterate over each category
+            Object.entries(categories).forEach(([category, articles]) => {
+                const recentArticles = {};
+
+                // Filter articles within the last 7 days
+                Object.entries(articles).forEach(([filename, articleData]) => {
+                    const articleDate = new Date(articleData.date); // Assuming format is YYYY-MM-DD
+                    if (articleDate >= sevenDaysAgo) {
+                        recentArticles[filename] = articleData;
+                    }
+                });
+
+                // If recent articles found for the category, add them to latestArticles
+                if (Object.keys(recentArticles).length > 0) {
+                    latestArticles[directory][category] = recentArticles;
+                }
+            });
+        });
+
+        // Store latest articles in /articlesListLatest
+        await database.ref(`/articlesListLatest`).set(latestArticles);
+
+        console.log("Updated articlesListLatest with the last 7 days of articles.");
+    } catch (error) {
+        console.error("Error updating articlesListLatest:", error);
+    }
+};

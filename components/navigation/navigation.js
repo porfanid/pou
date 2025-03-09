@@ -114,7 +114,7 @@ const AppNavigation = () => {
                             </div>
                         </div>
                     ) : (
-                        <Link className="block md:inline p-2 rounded-lg text-gray-400 hover:text-red-600 bg-red-900 transition-all duration-300" href="/login">
+                        <Link className="block md:inline p-2 rounded-lg text-gray-400 hover:text-red-600 bg-red-900 transition-all duration-300" href="/auth/login">
                             Log In
                         </Link>
                     )}
