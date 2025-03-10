@@ -49,7 +49,7 @@ const ArticleUpload = () => {
 
     useEffect(() => {
         if(!roles) return;
-        if(!roles.isAuthor){
+        if(!roles.isAuthor&&!roles.isAdmin){
             setMessage({ type: "error", text: "You are not authorized to upload articles." });
             return;
         }

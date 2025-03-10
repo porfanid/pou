@@ -1,4 +1,6 @@
 import * as admin from "../../firebase/adminConfig";
+import { spawn } from 'child_process';
+import stream from 'stream';
 
 const bucket = await admin.storage();
 
@@ -7,8 +9,10 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const { fullScale } = req.query;
-    const imagePath = req.query.path;
+    const { fullScale, path } = req.query;
+    const imagePath = path;
+
+    console.log("The image path is: ", imagePath);
 
     if (!imagePath) {
         return res.status(400).json({ error: "Image path is required" });

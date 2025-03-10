@@ -92,7 +92,6 @@ async function handler(req, res) {
                 socials,
                 language,
                 sub: uid,
-                img01: imageUrl,
                 slug: sanitizedSlug,
                 date: new Date().toLocaleDateString('en-GB', options),
                 authorApproved: true,

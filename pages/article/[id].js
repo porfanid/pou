@@ -16,7 +16,7 @@ export default function ArticlePage({ article, error, metatags }) {
     }
 
     const { title, description, content, sub, img01, details, translatedBy, socials, id } = article;
-
+    console.log("img01",img01);
     return (
         <>
             <article className="max-w-7xl mx-auto p-4">

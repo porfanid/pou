@@ -1,3 +1,4 @@
+import {isDev} from "../../../firebase/config";
 export async function getServerSidePropsGeneric(context, early, admin) {
     const { id } = context.params;
 
@@ -10,8 +11,12 @@ export async function getServerSidePropsGeneric(context, early, admin) {
         const database = await admin.database();
 
         // Define the path to the articles JSON file in Firebase Storage
-        const folder = early?"early_access":'articles';
-        //const folder = "upload_from_authors"
+        let folder;
+        if(isDev){
+            folder = "upload_from_authors";
+        }else {
+            folder = early ? "early_access" : 'articles';
+        }
         const articlePath = `${folder}/${id}.json`;
 
         // Reference the file from the Firebase Storage bucket
@@ -42,10 +47,12 @@ export async function getServerSidePropsGeneric(context, early, admin) {
             return { notFound: true }; // Trigger 404 if the articles doesn't exist
         }
 
+        article.img01=encodeURI(article.img01 ||`https://pulse-of-the-underground.com/assets/${id}`)
+
         const metaTags = {
             title: article.title || "Pulse Of The Underground",
             description: article.description || "Stay brutal and explore the unknown metal news, reviews, and features!",
-            image: encodeURI(article.img01 || "/path/to/default/image.jpg"),
+            image: encodeURI(article.img01 ||`https://pulse-of-the-underground.com/assets/${id}`),
             type: "article",
             url: `https://pulse-of-the-underground.com/articles/${id}`
         };

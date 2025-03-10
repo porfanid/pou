@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { handleShowList } from '../../components/pages/article/admin/articleUtils';
+import {useEffect, useState} from 'react';
+import {handleShowList} from '../../components/pages/article/admin/articleUtils';
 import renderCategoryCards from '../../components/pages/article/admin/CategoryCards';
 import RenderArticleCard from '../../components/pages/article/admin/ArticleCard';
 import {useAuth} from "../../context/AuthContext";
@@ -11,7 +11,7 @@ const AdminPublishSystem = () => {
     const [showModal, setShowModal] = useState(false);
     const [fileData, setFileData] = useState({});
     const [authorName, setAuthorName] = useState("");
-    const [socials, setSocials] = useState({ facebook: "", instagram: "", spotify: "", youtube: "" });
+    const [socials, setSocials] = useState({facebook: "", instagram: "", spotify: "", youtube: ""});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [earlyReleasesError, setEarlyReleasesError] = useState("");
@@ -21,22 +21,23 @@ const AdminPublishSystem = () => {
     const [publishedFiles, setPublishedFiles] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
     const [toastMessage, setToastMessage] = useState("");
+    const [oldData, setOldData] = useState({});
+    const [folder, setFolder] = useState("");
 
     const {user, roles} = useAuth();
 
 
-
     useEffect(() => {
         setLoading(true);
-        if(!roles||!roles.isAdmin){
+        if (!roles || !roles.isAdmin) {
             setError("You are not authorized to view this page");
             setLoading(false);
             return;
-        }else{
+        } else {
             setError("");
-            console.log("roles",roles)
+            console.log("roles", roles)
         }
-        fetchAllFiles().then(()=>{
+        fetchAllFiles().then(() => {
             setLoading(false);
         });
     }, [roles]);
@@ -99,16 +100,20 @@ const AdminPublishSystem = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.idToken}`
                 },
                 body: JSON.stringify({
                     file: selectedFile,
                     fileData: updatedFileData,
-                    authorName
+                    authorName,
+                    oldData,
+                    folder
                 }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+                console.log("errorData", errorData);
                 throw new Error(errorData.message || 'Failed to update articles');
             }
 
@@ -158,12 +163,13 @@ const AdminPublishSystem = () => {
         setLoading(true);
         setError("")
         let folder = "upload_from_authors";
-        if(isAlreadyPublished){
+        if (isAlreadyPublished) {
             folder = "articles";
         }
-        if(isEarlyReleased){
+        if (isEarlyReleased) {
             folder = "early_releases";
         }
+        setFolder(folder)
         try {
             const response = await fetch(`/api/articles/get?name=${file.slug}&folder=${folder}`);
             if (!response.ok) {
@@ -173,10 +179,14 @@ const AdminPublishSystem = () => {
 
             const data = await response.json();
 
+            setOldData({
+                file,data
+            });
+
             setSelectedFile(file);
             setFileData(data.fileData);
             setSocials(data.fileData.socials || {});
-            setAuthorName(data.authorName || '');
+            setAuthorName(data.fileData.sub || '');
             setShowModal(true);
         } catch (err) {
             setError(`Error fetching file data: ${err.message}`);
@@ -255,7 +265,8 @@ const AdminPublishSystem = () => {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="sort-by-category-switch" className="text-white mr-2">Sort by Category</label>
+                                <label htmlFor="sort-by-category-switch" className="text-white mr-2">Sort by
+                                    Category</label>
                                 <input
                                     type="checkbox"
                                     id="sort-by-category-switch"
@@ -268,24 +279,31 @@ const AdminPublishSystem = () => {
                     </div>
                 </div>
                 {error && <div className="alert alert-danger p-3 bg-red-600 text-white rounded pt-100">{error}</div>}
-                <hr className="bg-dark my-4" />
+                <hr className="bg-dark my-4"/>
 
-                {loading && <div className="flex justify-center my-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>}
+                {loading && <div className="flex justify-center my-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                </div>}
 
                 <div className="mb-4">
-                    <h2 className="text-white mb-3">Uploaded Files <span className="text-info text-sm">green background means ready for publishing</span></h2>
+                    <h2 className="text-white mb-3">Uploaded Files <span className="text-info text-sm">green background means ready for publishing</span>
+                    </h2>
                     {handleShowList(files, false, false, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, false, false, articleCardProps, roles))}
                 </div>
 
                 <div className="mb-4">
-                    <h2 className="text-white mb-3">Early Releases <span className="text-info text-sm">Click on an article to copy the link</span></h2>
-                    {earlyReleasesError && <div className="alert alert-danger p-3 bg-red-600 text-white rounded">{earlyReleasesError}</div>}
+                    <h2 className="text-white mb-3">Early Releases <span className="text-info text-sm">Click on an article to copy the link</span>
+                    </h2>
+                    {earlyReleasesError && <div
+                        className="alert alert-danger p-3 bg-red-600 text-white rounded">{earlyReleasesError}</div>}
                     {handleShowList(earlyReleases, false, true, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, false, true, articleCardProps, roles))}
                 </div>
 
                 <div className="mb-4">
-                    <h2 className="text-white mb-3">Already Published <span className="text-info text-sm">Click on an article to copy the link</span></h2>
-                    {alreadyPublishedError && <div className="alert alert-danger p-3 bg-red-600 text-white rounded">{alreadyPublishedError}</div>}
+                    <h2 className="text-white mb-3">Already Published <span className="text-info text-sm">Click on an article to copy the link</span>
+                    </h2>
+                    {alreadyPublishedError && <div
+                        className="alert alert-danger p-3 bg-red-600 text-white rounded">{alreadyPublishedError}</div>}
                     {handleShowList(publishedFiles, true, false, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, true, false, articleCardProps, roles))}
                 </div>
 
@@ -298,120 +316,123 @@ const AdminPublishSystem = () => {
                 )}
             </div>
 
-            {/* Tailwind Modal */}
-            {showModal && (
-                <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-gray-800 p-6 rounded-lg w-96 max-h-screen overflow-y-auto">
-                        <h2 className="text-white text-2xl mb-4">Edit File Data</h2>
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label htmlFor="content" className="text-light">Content</label>
+            {/* Tailwind Modal */}{showModal && (
+            <div className="fixed inset-0 z-50 flex justify-center bg-black bg-opacity-75 overflow-y-auto">
+                <div className="flex flex-col justify-center w-full pt-60 pb-60">
+                    <div
+                        className="relative mx-auto bg-gradient-to-br from-gray-900 to-black border-4 border-red-800 shadow-2xl rounded-lg w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto p-8">
+                        {/* Close button */}
+                        <button
+                            onClick={() => setShowModal(false)}
+                            className="absolute top-4 right-4 text-red-600 hover:text-red-400 text-3xl font-extrabold"
+                        >
+                            ✕
+                        </button>
+
+                        {/* Title */}
+                        <h2 className="text-center text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-purple-700 to-red-600 drop-shadow-lg mb-6"
+                            style={{fontFamily: 'Metal Mania, cursive'}}>
+                            Edit Article
+                        </h2>
+
+                        {/* Form */}
+                        <div className="space-y-4 text-white">
+                            {/* Title */}
+                            <div>
+                                <label className="block text-sm mb-1">Title</label>
+                                <input
+                                    type="text"
+                                    value={fileData.title || ""}
+                                    onChange={(e) => handleChange(e, "title")}
+                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                />
+                            </div>
+
+                            {/* Description */}
+                            <div>
+                                <label className="block text-sm mb-1">Description</label>
                                 <textarea
-                                    id="content"
-                                    value={fileData.content || ''}
+                                    value={fileData.description || ""}
+                                    onChange={(e) => handleChange(e, "description")}
+                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                    rows="4"
+                                />
+                            </div>
+
+                            {/* Author Name */}
+                            <div>
+                                <label className="block text-sm mb-1">Author Name</label>
+                                <input
+                                    type="text"
+                                    value={fileData.sub || ""}
+                                    onChange={(e) => handleChange(e, "sub")}
+                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm mb-1">Category</label>
+                                <input
+                                    type="text"
+                                    value={fileData.category || ""}
+                                    onChange={(e) => handleChange(e, "category")}
+                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm mb-1">Slug</label>
+                                <input
+                                    type="text"
+                                    value={fileData.slug || ""}
+                                    onChange={(e) => handleChange(e, "slug")}
+                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                />
+                            </div>
+
+                            {/* Social Links */}
+                            <div>
+                                <label className="block text-sm mb-2">Social Links</label>
+                                {["facebook", "instagram", "spotify", "youtube"].map((social) => (
+                                    <div key={social} className="mb-2">
+                                        <label className="block text-xs uppercase">{social}</label>
+                                        <input
+                                            type="text"
+                                            value={socials[social] || ""}
+                                            onChange={(e) => handleChange(e, social, true)}
+                                            className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Content (Rich Text or Markdown?) */}
+                            <div>
+                                <label className="block text-sm mb-1">Content</label>
+                                <textarea
+                                    value={fileData.content || ""}
                                     onChange={(e) => handleContentChange(e.target.value)}
-                                    className="bg-dark text-white w-full p-2 h-32"
+                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                    rows="6"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label htmlFor="title" className="text-light">Title</label>
-                                <input
-                                    type="text"
-                                    id="title"
-                                    value={fileData.title || ''}
-                                    onChange={(e) => handleChange(e, 'title', false)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
+
+                            {/* Save Button */}
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={handleSave}
+                                    className="bg-red-800 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full shadow-lg text-xl transition duration-300 ease-in-out transform hover:scale-105"
+                                    style={{fontFamily: 'Metal Mania, cursive'}}
+                                >
+                                    Save Changes
+                                </button>
                             </div>
-                            <div className="space-y-2">
-                                <label htmlFor="details" className="text-light">Details</label>
-                                <input
-                                    type="text"
-                                    id="details"
-                                    value={fileData.details || ''}
-                                    onChange={(e) => handleChange(e, 'details', false)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="facebook" className="text-light">Facebook</label>
-                                <input
-                                    type="text"
-                                    id="facebook"
-                                    value={socials.facebook || ''}
-                                    onChange={(e) => handleChange(e, 'facebook', true)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="instagram" className="text-light">Instagram</label>
-                                <input
-                                    type="text"
-                                    id="instagram"
-                                    value={socials.instagram || ''}
-                                    onChange={(e) => handleChange(e, 'instagram', true)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="spotify" className="text-light">Spotify</label>
-                                <input
-                                    type="text"
-                                    id="spotify"
-                                    value={socials.spotify || ''}
-                                    onChange={(e) => handleChange(e, 'spotify', true)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="youtube" className="text-light">YouTube</label>
-                                <input
-                                    type="text"
-                                    id="youtube"
-                                    value={socials.youtube || ''}
-                                    onChange={(e) => handleChange(e, 'youtube', true)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="img01" className="text-light">Image URL</label>
-                                <input
-                                    type="text"
-                                    id="img01"
-                                    value={fileData.img01 || ''}
-                                    onChange={(e) => handleChange(e, 'img01', false)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="author" className="text-light">Author</label>
-                                <input
-                                    type="text"
-                                    id="author"
-                                    value={authorName}
-                                    onChange={(e) => setAuthorName(e.target.value)}
-                                    className="bg-dark text-white w-full p-2"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex justify-end mt-4 space-x-2">
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="px-4 py-2 bg-gray-600 text-white rounded"
-                            >
-                                Close
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className="px-4 py-2 bg-blue-600 text-white rounded"
-                                disabled={loading}
-                            >
-                                {loading ? 'Saving...' : 'Save Changes'}
-                            </button>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+        )}
+
         </>
     );
 };
