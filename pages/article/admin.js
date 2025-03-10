@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { handleShowList } from '../../components/pages/article/admin/articleUtils';
 import renderCategoryCards from '../../components/pages/article/admin/CategoryCards';
-import renderArticleCard from '../../components/pages/article/admin/ArticleCard';
+import RenderArticleCard from '../../components/pages/article/admin/ArticleCard';
+import {useAuth} from "../../context/AuthContext";
 
 const AdminPublishSystem = () => {
     const [sortByDate, setSortByDate] = useState(false);
@@ -11,11 +12,58 @@ const AdminPublishSystem = () => {
     const [fileData, setFileData] = useState({});
     const [authorName, setAuthorName] = useState("");
     const [socials, setSocials] = useState({ facebook: "", instagram: "", spotify: "", youtube: "" });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [earlyReleasesError, setEarlyReleasesError] = useState("");
+    const [alreadyPublishedError, setAlreadyPublishedError] = useState("");
+    const [files, setFiles] = useState([]);
+    const [earlyReleases, setEarlyReleases] = useState([]);
+    const [publishedFiles, setPublishedFiles] = useState([]);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [toastMessage, setToastMessage] = useState("");
 
-    // Placeholder for error messages
-    const error = "";
-    const earlyReleasesError = "";
-    const alreadyPublishedError = "";
+    const {user, roles} = useAuth();
+
+
+
+    useEffect(() => {
+        setLoading(true);
+        if(!roles||!roles.isAdmin){
+            setError("You are not authorized to view this page");
+            setLoading(false);
+            return;
+        }else{
+            setError("");
+            console.log("roles",roles)
+        }
+        fetchAllFiles().then(()=>{
+            setLoading(false);
+        });
+    }, [roles]);
+
+    const fetchAllFiles = async () => {
+        try {
+            // Fetch regular files
+            const regularResponse = await fetch('/api/articles/list');
+            if (!regularResponse.ok) throw new Error('Failed to fetch regular files');
+            const regularData = await regularResponse.json();
+            setFiles(regularData.files || []);
+
+            // Fetch early releases
+            const earlyResponse = await fetch('/api/articles/list?type=early');
+            if (!earlyResponse.ok) throw new Error('Failed to fetch early releases');
+            const earlyData = await earlyResponse.json();
+            setEarlyReleases(earlyData.files || []);
+
+            // F`etch published files
+            const publishedResponse = await fetch('/api/articles/list?type=published');
+            if (!publishedResponse.ok) throw new Error('Failed to fetch published files');
+            const publishedData = await publishedResponse.json();
+            setPublishedFiles(publishedData.files || []);
+        } catch (err) {
+            setError(`Error fetching files: ${err.message}`);
+        }
+    };
 
     const handleContentChange = (value) => {
         setFileData((prevState) => ({
@@ -38,16 +86,161 @@ const AdminPublishSystem = () => {
         }
     };
 
-    const handleSave = () => {
-        // Your save logic here
+    const handleSave = async () => {
+        setLoading(true);
+        try {
+            // Update socials in fileData
+            const updatedFileData = {
+                ...fileData,
+                socials
+            };
+
+            const response = await fetch('/api/articles/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    file: selectedFile,
+                    fileData: updatedFileData,
+                    authorName
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update articles');
+            }
+
+            setShowModal(false);
+            showToastNotification('Article updated successfully!');
+            fetchAllFiles(); // Refresh the lists
+        } catch (err) {
+            setError(`Error updating file: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (file, isAlreadyPublished, isEarlyReleased) => {
+        const isConfirmed = window.confirm(`Are you sure you want to delete the file "${file.title || file.slug}"?`);
+        if (!isConfirmed) return;
+
+        setLoading(true);
+        try {
+            const response = await fetch('/api/articles/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    file,
+                    isAlreadyPublished,
+                    isEarlyReleased
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete articles');
+            }
+
+            showToastNotification('Article deleted successfully!');
+            fetchAllFiles(); // Refresh the lists
+        } catch (err) {
+            setError(`Error deleting file: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEdit = async (file, isAlreadyPublished, isEarlyReleased) => {
+        setLoading(true);
+        setError("")
+        let folder = "upload_from_authors";
+        if(isAlreadyPublished){
+            folder = "articles";
+        }
+        if(isEarlyReleased){
+            folder = "early_releases";
+        }
+        try {
+            const response = await fetch(`/api/articles/get?name=${file.slug}&folder=${folder}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to fetch articles data');
+            }
+
+            const data = await response.json();
+
+            setSelectedFile(file);
+            setFileData(data.fileData);
+            setSocials(data.fileData.socials || {});
+            setAuthorName(data.authorName || '');
+            setShowModal(true);
+        } catch (err) {
+            setError(`Error fetching file data: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePublish = async (toNormal, file, isEarlyReleased) => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/articles/publish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    file,
+                    toNormal,
+                    isEarlyReleased
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to publish articles');
+            }
+
+            showToastNotification('Article published successfully!');
+            fetchAllFiles(); // Refresh the lists
+        } catch (err) {
+            setError(`Error publishing file: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const copyLinkToClipboard = (link) => {
+        navigator.clipboard.writeText(window.location.origin + link);
+        showToastNotification('Link copied to clipboard!');
+    };
+
+    const showToastNotification = (message) => {
+        setToastMessage(message);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
+    // Pass the handler functions to the articles card component
+    const articleCardProps = {
+        handleDelete,
+        handleEdit,
+        handlePublish,
+        copyLinkToClipboard
     };
 
     return (
         <>
             <div className="container mt-4">
                 <div className="flex items-center justify-between">
-                    <div className="w-1/3">
-                        <h2 className="text-white">Admin Publish System</h2>
+                    <div className="w-full">
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-center text-transparent bg-clip-text bg-red-500  drop-shadow-lg">
+                            Admin Publish System
+                        </h1>
                     </div>
                     <div className="w-2/3 flex justify-end">
                         <div className="flex items-center space-x-4">
@@ -74,28 +267,33 @@ const AdminPublishSystem = () => {
                         </div>
                     </div>
                 </div>
+                {error && <div className="alert alert-danger p-3 bg-red-600 text-white rounded pt-100">{error}</div>}
                 <hr className="bg-dark my-4" />
+
+                {loading && <div className="flex justify-center my-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>}
+
                 <div className="mb-4">
-                    <h3 className="text-light mb-3">Uploaded Files <span className="text-info text-sm">green background means ready for publishing</span></h3>
-                    {error && <div className="alert alert-danger">{error}</div>}
-                    {handleShowList([], false, false, sortByCategory, sortByDate, renderCategoryCards, renderArticleCard)}
+                    <h2 className="text-white mb-3">Uploaded Files <span className="text-info text-sm">green background means ready for publishing</span></h2>
+                    {handleShowList(files, false, false, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, false, false, articleCardProps, roles))}
                 </div>
+
                 <div className="mb-4">
-                    <h3 className="text-light mb-3">Early Releases <span className="text-info text-sm">Click on an article to copy the link</span></h3>
-                    {earlyReleasesError && <div className="alert alert-danger">{earlyReleasesError}</div>}
-                    {handleShowList([], false, true, sortByCategory, sortByDate, renderCategoryCards, renderArticleCard)}
+                    <h2 className="text-white mb-3">Early Releases <span className="text-info text-sm">Click on an article to copy the link</span></h2>
+                    {earlyReleasesError && <div className="alert alert-danger p-3 bg-red-600 text-white rounded">{earlyReleasesError}</div>}
+                    {handleShowList(earlyReleases, false, true, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, false, true, articleCardProps, roles))}
                 </div>
+
                 <div className="mb-4">
-                    <h3 className="text-light mb-3">Already Published <span className="text-info text-sm">Click on an article to copy the link</span></h3>
-                    {alreadyPublishedError && <div className="alert alert-danger">{alreadyPublishedError}</div>}
-                    {handleShowList([], true, false, sortByCategory, sortByDate, renderCategoryCards, renderArticleCard)}
+                    <h2 className="text-white mb-3">Already Published <span className="text-info text-sm">Click on an article to copy the link</span></h2>
+                    {alreadyPublishedError && <div className="alert alert-danger p-3 bg-red-600 text-white rounded">{alreadyPublishedError}</div>}
+                    {handleShowList(publishedFiles, true, false, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, true, false, articleCardProps, roles))}
                 </div>
 
                 {/* Tailwind Toast */}
                 {showToast && (
                     <div className="fixed bottom-5 right-5 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
-                        <strong>Link Copied!</strong>
-                        <p>The article link has been copied to the clipboard.</p>
+                        <strong>Success!</strong>
+                        <p>{toastMessage}</p>
                     </div>
                 )}
             </div>
@@ -103,16 +301,16 @@ const AdminPublishSystem = () => {
             {/* Tailwind Modal */}
             {showModal && (
                 <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-gray-800 p-6 rounded-lg w-96">
+                    <div className="bg-gray-800 p-6 rounded-lg w-96 max-h-screen overflow-y-auto">
                         <h2 className="text-white text-2xl mb-4">Edit File Data</h2>
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label htmlFor="content" className="text-light">Content</label>
                                 <textarea
                                     id="content"
-                                    value={fileData.content}
+                                    value={fileData.content || ''}
                                     onChange={(e) => handleContentChange(e.target.value)}
-                                    className="bg-dark text-white w-full p-2"
+                                    className="bg-dark text-white w-full p-2 h-32"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -120,7 +318,7 @@ const AdminPublishSystem = () => {
                                 <input
                                     type="text"
                                     id="title"
-                                    value={fileData.title}
+                                    value={fileData.title || ''}
                                     onChange={(e) => handleChange(e, 'title', false)}
                                     className="bg-dark text-white w-full p-2"
                                 />
@@ -130,7 +328,7 @@ const AdminPublishSystem = () => {
                                 <input
                                     type="text"
                                     id="details"
-                                    value={fileData.details}
+                                    value={fileData.details || ''}
                                     onChange={(e) => handleChange(e, 'details', false)}
                                     className="bg-dark text-white w-full p-2"
                                 />
@@ -140,7 +338,7 @@ const AdminPublishSystem = () => {
                                 <input
                                     type="text"
                                     id="facebook"
-                                    value={socials.facebook}
+                                    value={socials.facebook || ''}
                                     onChange={(e) => handleChange(e, 'facebook', true)}
                                     className="bg-dark text-white w-full p-2"
                                 />
@@ -150,7 +348,7 @@ const AdminPublishSystem = () => {
                                 <input
                                     type="text"
                                     id="instagram"
-                                    value={socials.instagram}
+                                    value={socials.instagram || ''}
                                     onChange={(e) => handleChange(e, 'instagram', true)}
                                     className="bg-dark text-white w-full p-2"
                                 />
@@ -160,7 +358,7 @@ const AdminPublishSystem = () => {
                                 <input
                                     type="text"
                                     id="spotify"
-                                    value={socials.spotify}
+                                    value={socials.spotify || ''}
                                     onChange={(e) => handleChange(e, 'spotify', true)}
                                     className="bg-dark text-white w-full p-2"
                                 />
@@ -170,7 +368,7 @@ const AdminPublishSystem = () => {
                                 <input
                                     type="text"
                                     id="youtube"
-                                    value={socials.youtube}
+                                    value={socials.youtube || ''}
                                     onChange={(e) => handleChange(e, 'youtube', true)}
                                     className="bg-dark text-white w-full p-2"
                                 />
@@ -180,7 +378,7 @@ const AdminPublishSystem = () => {
                                 <input
                                     type="text"
                                     id="img01"
-                                    value={fileData.img01}
+                                    value={fileData.img01 || ''}
                                     onChange={(e) => handleChange(e, 'img01', false)}
                                     className="bg-dark text-white w-full p-2"
                                 />
@@ -206,8 +404,9 @@ const AdminPublishSystem = () => {
                             <button
                                 onClick={handleSave}
                                 className="px-4 py-2 bg-blue-600 text-white rounded"
+                                disabled={loading}
                             >
-                                Save Changes
+                                {loading ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
                     </div>

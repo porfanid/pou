@@ -1,22 +1,36 @@
 const admin = require("../../../firebase/adminConfig");
+import { verifyIdToken } from '../../../middleware/auth';
+import {withMiddleware} from '../../../utils/withMiddleware';
 
 
 import {IncomingForm} from 'formidable';
 import fs from 'fs';
 
-// Disable the default body parser
 export const config = {
     api: {
         bodyParser: false,
     },
 };
 
-export default async function handler(req, res) {
+
+async function handler(req, res) {
+
+
     // Initialize Firebase Admin (only if not already initialized)
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const user = req.user;
+
+    if(!user||!user.roles){
+        return res.status(401).json({ error: 'Unauthorized: Unknown User' });
+    }
+
+    if(!user.roles.isAuthor&&!user.roles.isAdmin){
+        return res.status(401).json({ error: 'Unauthorized: Not an Author' });
     }
 
     // Parse form data with files
@@ -69,7 +83,7 @@ export default async function handler(req, res) {
                 imageUrl = `https://pulse-of-the-underground.com/assets/${sanitizedSlug}`;
             }
 
-            // Prepare article data
+            // Prepare articles data
             const articleData = {
                 title,
                 details,
@@ -98,13 +112,13 @@ export default async function handler(req, res) {
                 date: new Date().toLocaleDateString('en-GB', options),
             };
 
-            // Upload article JSON to Firebase Storage
+            // Upload articles JSON to Firebase Storage
             const jsonFileRef = storage.file(`upload_from_authors/${sanitizedSlug}.json`);
             await jsonFileRef.save(JSON.stringify(articleData), {
                 contentType: "application/json",
             });
 
-            // Save article data to Firebase Realtime Database
+            // Save articles data to Firebase Realtime Database
             const articlesRef = database.ref(`articlesList/upload_from_authors/${category}/${sanitizedSlug}`);
             await articlesRef.set(articleMetadata);
 
@@ -126,10 +140,23 @@ export default async function handler(req, res) {
             });
 
         } catch (error) {
-            console.error("Error uploading article:", error);
+            console.error("Error uploading articles:", error);
             res.status(500).json({
                 error: error instanceof Error ? error.message : 'An unknown error occurred'
             });
         }
     }).then();
+}
+
+export default async function wrappedHandler(req, res) {
+    try {
+        // Run the middleware first
+        await withMiddleware(verifyIdToken)(req, res);
+
+        // Then run your actual handler
+        return await handler(req, res);
+    } catch (error) {
+        console.error(error);
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 }

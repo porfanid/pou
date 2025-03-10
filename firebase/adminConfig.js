@@ -5,11 +5,12 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 const client = new SecretManagerServiceClient();
 
 // Function to retrieve secrets
-async function getSecret(secretName) {
+export async function getSecret(secretName, version='latest') {
     try {
         const [accessResponse] = await client.accessSecretVersion({
-            name: `projects/1095342862820/secrets/${secretName}/versions/latest`,
+            name: `projects/1095342862820/secrets/${secretName}/versions/${version}`,
         });
+        console.log("Successfully read secret")
         return accessResponse.payload.data.toString();
     } catch (error) {
         console.error('Error accessing secret:', error);
@@ -29,14 +30,7 @@ export async function initializeFirebase() {
         const secret = await getSecret('admin-account');
         serviceAccount = JSON.parse(secret);
     } catch (error) {
-        console.error('Failed to fetch secret, falling back to local file:', error);
-        try {
-            serviceAccount = (await import('./heavy-local-admin.json')).default;
-            console.log("Imported the file");
-        } catch (error) {
-            console.error('Failed to load local service account file:', error);
-            throw new Error('Failed to initialize Firebase in development.');
-        }
+        console.error('Failed to fetch secret:', error);
     }
 
     // Initialize Firebase Admin

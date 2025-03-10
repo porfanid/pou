@@ -120,12 +120,15 @@ const ArticleUpload = () => {
         formData.append("isReady", isReady);
 
         try {
-            const response = await axios.post("/api/article/upload", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
+            const response = await axios.post("/api/articles/upload", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                    'Authorization': `Bearer ${user.idToken}`
+                },
             });
             setMessage({ type: "success", text: response.data.message });
         } catch (error) {
-            setMessage({ type: "error", text: error.response?.data?.error || "Failed to upload article" });
+            setMessage({ type: "error", text: error.response?.data?.error || "Failed to upload articles" });
         } finally {
             setLoading(false);
         }

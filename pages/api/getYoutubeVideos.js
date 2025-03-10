@@ -1,14 +1,15 @@
 // pages/api/getYoutubeVideos.js
 import axios from 'axios';
+import {getSecret} from "../../firebase/adminConfig"
 
 export default async function handler(req, res) {
-    const ApiKey = process.env.YOUTUBE_API_KEY;  // Store your API key in .env.local
     const ChannelID = 'UCH6ADxBFyVUsiazyICRz2sQ'; // Set your ChannelID here
+    const secret = await getSecret('YOUTUBE_API_KEY');
 
     try {
         const response = await axios.get(`https://www.googleapis.com/youtube/v3/search`, {
             params: {
-                key: ApiKey,
+                key: secret,
                 channelId: ChannelID,
                 part: 'snippet,id',
                 order: 'date',

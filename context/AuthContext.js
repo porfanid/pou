@@ -26,16 +26,25 @@ export const AuthProvider = ({ children }) => {
             console.log("Firebase User:", firebaseUser); // Debugging
             if (firebaseUser&&firebaseUser.emailVerified) {
                 setUserAuth(firebaseUser);
+                const idToken = await firebaseUser.getIdToken();
                 try {
                     const response = await fetch("/api/getCustomClaims", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ uid: firebaseUser.uid }),
+                        headers: {
+                            "Content-Type": "application/json",
+                            'Authorization': `Bearer ${idToken}`
+                        },
+                        body: JSON.stringify({ uid: "Empty" }),
                     });
 
                     if (!response.ok) throw new Error("Failed to fetch claims");
 
                     const data = await response.json();
+
+                    console.log("Custom Claims:", data.roles.roles); // Debugging
+
+                    setRoles(data.roles.roles);
+
                     const userPath = `users/${firebaseUser.uid}`;
 
                     const userExistsInDb = await checkIfReferenceExists(userPath);
@@ -50,13 +59,14 @@ export const AuthProvider = ({ children }) => {
                         setUser(userData);
                     }else {
                         const userRef = ref(database, userPath);
-                        unsubscribeUser = onValue(userRef, (snapshot) => {
+                        unsubscribeUser = onValue(userRef, async (snapshot) => {
                             userData = snapshot.val();
                             if(!userData){
                                 userData = firebaseUser;
                             }
                             userData.claims = data.customClaims;
                             userData.uid = firebaseUser.uid;
+                            userData.idToken = await firebaseUser.getIdToken();
                             setUser(userData);
                         });
                     }
@@ -81,29 +91,12 @@ export const AuthProvider = ({ children }) => {
         if(!user){
             return;
         }
-        const rolesRef = ref(database, "roles");
-        return onValue(rolesRef, (rolesSnapshot) => {
-            const rolesData = rolesSnapshot.val();
 
-            const userRoles = {
-                isBand: !!user.claims.band, // Fixed claims access
-                isAuthor: !!user.claims.admin, // Fixed claims access
-            };
-
-            userRoles.isTranslator = rolesData.translationSystem.includes(user.email);
-            userRoles.isLeader = rolesData.authorLeader.includes(user.email);
-            userRoles.isAdmin = rolesData.admin.includes(user.email);
-            userRoles.isCommentAdmin = (rolesData.comments || []).includes(user.email);
-            userRoles.isMerchAdmin = (rolesData.merch || []).includes(user.email);
-
-            setRoles(userRoles);
-
-            const notificationsRef = ref(database, `users/${user.uid}/notifications`);
-            onValue(notificationsRef, (notificationsSnapshot) => {
-                const notificationsData = notificationsSnapshot.val();
-                const notifications = notificationsData ? Object.values(notificationsData) : [];
-                setNotifications(notifications);
-            });
+        const notificationsRef = ref(database, `users/${user.uid}/notifications`);
+        return onValue(notificationsRef, (notificationsSnapshot) => {
+            const notificationsData = notificationsSnapshot.val();
+            const notifications = notificationsData ? Object.values(notificationsData) : [];
+            setNotifications(notifications);
         });
     }, [user]);
 

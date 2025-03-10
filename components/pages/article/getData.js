@@ -9,9 +9,9 @@ export async function getServerSidePropsGeneric(context, early, admin) {
         const bucket = await admin.storage();
         const database = await admin.database();
 
-        // Define the path to the article JSON file in Firebase Storage
-        //const folder = early?"early_access":'articles';
-        const folder = "upload_from_authors"
+        // Define the path to the articles JSON file in Firebase Storage
+        const folder = early?"early_access":'articles';
+        //const folder = "upload_from_authors"
         const articlePath = `${folder}/${id}.json`;
 
         // Reference the file from the Firebase Storage bucket
@@ -23,7 +23,7 @@ export async function getServerSidePropsGeneric(context, early, admin) {
         // Parse the content as JSON
         const article = JSON.parse(fileContent.toString());
 
-        console.log("The article is: ",article)
+        console.log("The articles is: ",article)
 
         const authorCode = article.sub;
 
@@ -39,7 +39,7 @@ export async function getServerSidePropsGeneric(context, early, admin) {
         }
 
         if (!article) {
-            return { notFound: true }; // Trigger 404 if the article doesn't exist
+            return { notFound: true }; // Trigger 404 if the articles doesn't exist
         }
 
         const metaTags = {

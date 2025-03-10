@@ -1,14 +1,33 @@
 // pages/api/donate.js
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
+import {getSecret} from "../../firebase/adminConfig"
 import {isDev} from "../../firebase/config"
 
-const stripe = new Stripe(isDev?process.env.STRIPE_SECRET_KEY_TEST:process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2022-11-15',
-});
+
+
+
 
 export default async function handler(req = NextApiRequest, res = NextApiResponse) {
     if (req.method === 'POST') {
+        let secret;
+        try {
+            // Fetch the service account from Secret Manager
+            if(isDev){
+                secret = await getSecret('STRIPE_SECRET_KEY');
+            }else{
+                secret = await getSecret('STRIPE_SECRET_KEY', "1");
+            }
+
+        } catch (error) {
+            console.error('Failed to fetch secret:', error);
+            return res.status(500).json({ message: `Server error: ${error.message}` });
+        }
+
+        const stripe = new Stripe(secret, {
+            apiVersion: '2022-11-15',
+        });
+
         const { amount, paymentMethodId } = req.body;
 
         try {
@@ -19,7 +38,13 @@ export default async function handler(req = NextApiRequest, res = NextApiRespons
                 confirm: true,
             });
 
-            res.status(200).json({ success: true });
+            if(paymentIntent.status === "succeeded"){
+                res.status(200).json({ success: true });
+            }else{
+                res.status(400).json({ success: false, error: "Payment Status: "+paymentIntent.status });
+            }
+
+
         } catch (error) {
             res.status(400).json({ success: false, error: error.message });
         }

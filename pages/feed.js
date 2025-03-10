@@ -30,7 +30,7 @@ export async function getServerSideProps({ res, query }) {
         // Sort articles by date (newest first)
         articlesArray.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Get latest article date
+        // Get latest articles date
         if (articlesArray.length > 0) {
             latestArticleDate = new Date(articlesArray[0].date);
         }

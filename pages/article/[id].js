@@ -151,7 +151,7 @@ export default function ArticlePage({ article, error, metatags }) {
 
 
 
-// Server-side rendering to fetch article data
+// Server-side rendering to fetch articles data
 
 
 export async function getServerSideProps(context) {
