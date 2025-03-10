@@ -4,6 +4,8 @@ import {verifyIdToken} from "../../../middleware/auth";
 
 const renameImages = async (oldName, newName) => {
     const storage = await admin.storage();
+    console.log("oldName", oldName);
+    console.log("newName", newName);
     const resolutions = [
         "600x300",
         "600x600",
@@ -13,17 +15,24 @@ const renameImages = async (oldName, newName) => {
         ""
     ]
 
-    for (const resolution of resulutions) {
+    for (const resolution of resolutions) {
         let oldPath;
         let newPath;
-        if(!resolution.imageUrl) {
-            oldPath = storage.ref(`images/${oldName}`)
-            newPath = storage.ref(`images/${newName}`)
+        if(!resolution) {
+            oldPath = storage.file(`images/${oldName}`)
+            newPath = storage.file(`images/${newName}`)
         }else {
-            oldPath = storage.ref(`images/${oldName}_${resolution}`)
-            newPath = storage.ref(`images/${newName}_${resolution}`)
+            oldPath = storage.file(`images/${oldName}_${resolution}`)
+            newPath = storage.file(`images/${newName}_${resolution}`)
         }
-        await fileRef.move(newFileRef);
+        if(!oldPath.exists()){
+            continue;
+        }
+        try{
+            await oldPath.move(newPath);
+        }catch (e) {
+            console.error(e);
+        }
     }
 }
 
@@ -53,10 +62,6 @@ async function handler(req, res) {
         const db = await admin.database();
         const storage = await admin.storage();
 
-        console.log(fileData);
-        console.log(file)
-        console.log(oldData)
-
         console.log(`${folder}/${oldData.file.slug}`)
         console.log(`${folder}/${file.slug}`)
 
@@ -85,6 +90,9 @@ async function handler(req, res) {
         if(oldData.data.fileData.slug!==fileData.slug){
             const newFileRef = storage.file(`${folder}/${fileData.slug}.json`);
             await fileRef.move(newFileRef);
+            if(!fileData.img01){
+                await renameImages(oldData.file.slug, fileData.slug)
+            }
         }
 
         return res.status(200).json({ message: 'File updated successfully' });

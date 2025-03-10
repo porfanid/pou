@@ -23,6 +23,9 @@ const AdminPublishSystem = () => {
     const [toastMessage, setToastMessage] = useState("");
     const [oldData, setOldData] = useState({});
     const [folder, setFolder] = useState("");
+    const [file, setFile] = useState({});
+    const [ isAlreadyPublished, setIsAlreadyPublished] = useState(false);
+    const [isEarlyReleased, setIsEarlyReleased] = useState(false);
 
     const {user, roles} = useAuth();
 
@@ -119,10 +122,10 @@ const AdminPublishSystem = () => {
 
             setShowModal(false);
             showToastNotification('Article updated successfully!');
-            fetchAllFiles(); // Refresh the lists
         } catch (err) {
             setError(`Error updating file: ${err.message}`);
         } finally {
+            await fetchAllFiles(); // Refresh the lists
             setLoading(false);
         }
     };
@@ -161,7 +164,10 @@ const AdminPublishSystem = () => {
 
     const handleEdit = async (file, isAlreadyPublished, isEarlyReleased) => {
         setLoading(true);
-        setError("")
+        setError("");
+        setFile(file)
+        setIsAlreadyPublished(isAlreadyPublished)
+        setIsEarlyReleased(isEarlyReleased)
         let folder = "upload_from_authors";
         if (isAlreadyPublished) {
             folder = "articles";

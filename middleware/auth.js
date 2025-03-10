@@ -3,8 +3,6 @@
 import * as admin from '../firebase/adminConfig';
 
 export const verifyIdToken = async (req, res, next) => {
-    console.log("Test headers")
-    console.log(req.headers);
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {

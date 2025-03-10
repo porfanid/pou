@@ -47,7 +47,12 @@ export async function getServerSidePropsGeneric(context, early, admin) {
             return { notFound: true }; // Trigger 404 if the articles doesn't exist
         }
 
-        article.img01=encodeURI(article.img01 ||`https://pulse-of-the-underground.com/assets/${id}`)
+        let siteUrl = "https://pulse-of-the-underground.com";
+        if(isDev){
+            siteUrl = "http://localhost:3000";
+        }
+
+        article.img01=encodeURI(article.img01 ||`${siteUrl}/assets/${id}`)
 
         const metaTags = {
             title: article.title || "Pulse Of The Underground",

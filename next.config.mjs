@@ -17,7 +17,8 @@ const nextConfig = {
             "lh3.googleusercontent.com",
             "i.ytimg.com",
             "via.placeholder.com",
-            "storage.googleapis.com"
+            "storage.googleapis.com",
+            "localhost"
         ],
     },
 
