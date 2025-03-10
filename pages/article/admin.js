@@ -1,8 +1,14 @@
-import {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {handleShowList} from '../../components/pages/article/admin/articleUtils';
 import renderCategoryCards from '../../components/pages/article/admin/CategoryCards';
 import RenderArticleCard from '../../components/pages/article/admin/ArticleCard';
 import {useAuth} from "../../context/AuthContext";
+import {getValue} from "firebase/remote-config";
+import {config} from "../../firebase/config";
+import Select from "react-select";
+import DraftEditor, {exportOptions} from "../../components/editor/editor";
+import {EditorState, ContentState, convertFromHTML} from "draft-js";
+import {stateToHTML} from "draft-js-export-html";
 
 const AdminPublishSystem = () => {
     const [sortByDate, setSortByDate] = useState(false);
@@ -22,6 +28,9 @@ const AdminPublishSystem = () => {
     const [oldData, setOldData] = useState({});
     const [folder, setFolder] = useState("");
     const {user, roles} = useAuth();
+    const [categories, setCategories] = useState([]);
+    const [languageOptions, setLanguageOptions] = useState([]);
+    const [editorState, setEditorState] = useState(EditorState.createEmpty());
 
 
     useEffect(() => {
@@ -38,6 +47,25 @@ const AdminPublishSystem = () => {
             setLoading(false);
         });
     }, [roles]);
+
+
+    useEffect(() => {
+        const languages = getValue(config, "languages").asString();
+        const parsedLanguages = Object.entries(JSON.parse(languages)).map(([key, value]) => ({
+            value: key,
+            label: value
+        }));
+        setLanguageOptions(parsedLanguages);
+
+        const categories = getValue(config, "categories").asString();
+        console.log(categories);
+        const parsedCategories = JSON.parse(categories).map((category) => ({
+            value: category,
+            label: category
+        }));
+        console.log(parsedCategories)
+        setCategories(parsedCategories);
+    }, []);
 
     const setSlug = (regularFiles)=>{
         Object.keys(regularFiles).forEach(key => {
@@ -77,15 +105,21 @@ const AdminPublishSystem = () => {
         }
     };
 
-    const handleContentChange = (value) => {
-        setFileData((prevState) => ({
-            ...prevState,
-            content: value,
-        }));
+    // Convert HTML to Draft.js EditorState
+    const convertHtmlToEditorState = (html) => {
+        if (!html) return EditorState.createEmpty();
+
+        const blocksFromHTML = convertFromHTML(html);
+        const contentState = ContentState.createFromBlockArray(
+            blocksFromHTML.contentBlocks,
+            blocksFromHTML.entityMap
+        );
+
+        return EditorState.createWithContent(contentState);
     };
 
     const handleChange = (e, field, isSocial, isObject) => {
-        let value =e.target.value;
+        let value = e.target.value;
         if(isObject){
             value = JSON.parse(value)
         }
@@ -106,9 +140,14 @@ const AdminPublishSystem = () => {
     const handleSave = async () => {
         setLoading(true);
         try {
+            // Convert editor state to HTML
+            const contentState = editorState.getCurrentContent();
+            const htmlContent = stateToHTML(contentState, exportOptions);
+
             // Update socials in fileData
             const updatedFileData = {
                 ...fileData,
+                content: htmlContent,
                 socials
             };
 
@@ -206,13 +245,18 @@ const AdminPublishSystem = () => {
             const data = await response.json();
 
             setOldData({
-                file,data
+                file, data
             });
 
             setSelectedFile(file);
             setFileData(data.fileData);
             setSocials(data.fileData.socials || {});
             setAuthorName(data.fileData.sub || '');
+
+            // Convert HTML content to EditorState
+            const editorStateFromHTML = convertHtmlToEditorState(data.fileData.content);
+            setEditorState(editorStateFromHTML);
+
             setShowModal(true);
         } catch (err) {
             setError(`Error fetching file data: ${err.message}`);
@@ -407,11 +451,70 @@ const AdminPublishSystem = () => {
 
                             <div>
                                 <label className="block text-sm mb-1">Category</label>
-                                <input
-                                    type="text"
-                                    value={fileData.category || ""}
-                                    onChange={(e) => handleChange(e, "category")}
-                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+
+                                <Select
+                                    value={categories.find(option => option.value === fileData.category)}
+                                    onChange={(selectedOption) => handleChange({target: {value: selectedOption.value}}, "category")}
+                                    options={categories}
+                                    className="mt-2"
+                                    classNamePrefix="react-select"
+                                    styles={{
+                                        control: (provided) => ({
+                                            ...provided,
+                                            backgroundColor: '#1f2937',
+                                            borderColor: '#b91c1c',
+                                            color: '#f00',
+                                        }),
+                                        menu: (provided) => ({
+                                            ...provided,
+                                            backgroundColor: '#1f2937',
+                                            color: '#f00',
+                                        }),
+                                        singleValue: (provided) => ({
+                                            ...provided,
+                                            color: '#ffffff',
+                                            backgroundColor: '#1f2937',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            backgroundColor: state.isSelected ? '#791c1c' : state.isFocused ? '#471b1b' : '#1f2937',
+                                            color: state.isSelected ? '#ffffff' : '#ffffff',
+                                        })
+                                    }}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm mb-1">Language</label>
+                                <Select
+                                    value={languageOptions.find(option => option.value === fileData.lang)}
+                                    onChange={(selectedOption) => handleChange({target: {value: selectedOption.value}}, "lang")}
+                                    options={languageOptions}
+                                    className="mt-2"
+                                    classNamePrefix="react-select"
+                                    styles={{
+                                        control: (provided) => ({
+                                            ...provided,
+                                            backgroundColor: '#1f2937',
+                                            borderColor: '#b91c1c',
+                                            color: '#f00',
+                                        }),
+                                        menu: (provided) => ({
+                                            ...provided,
+                                            backgroundColor: '#1f2937',
+                                            color: '#f00',
+                                        }),
+                                        singleValue: (provided) => ({
+                                            ...provided,
+                                            color: '#ffffff',
+                                            backgroundColor: '#1f2937',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            backgroundColor: state.isSelected ? '#791c1c' : state.isFocused ? '#471b1b' : '#1f2937',
+                                            color: state.isSelected ? '#ffffff' : '#ffffff',
+                                        })
+                                    }}
                                 />
                             </div>
 
@@ -450,15 +553,15 @@ const AdminPublishSystem = () => {
                                 ))}
                             </div>
 
-                            {/* Content (Rich Text or Markdown?) */}
+                            {/* Content - Using DraftEditor instead of textarea */}
                             <div>
                                 <label className="block text-sm mb-1">Content</label>
-                                <textarea
-                                    value={fileData.content || ""}
-                                    onChange={(e) => handleContentChange(e.target.value)}
-                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
-                                    rows="6"
-                                />
+                                <div className="bg-gray-800 border-2 border-red-800 rounded">
+                                    <DraftEditor
+                                        editorState={editorState}
+                                        setEditorState={setEditorState}
+                                    />
+                                </div>
                             </div>
 
                             {/* Save Button */}

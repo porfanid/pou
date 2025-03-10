@@ -15,8 +15,10 @@ export async function getServerSidePropsGeneric(context, early, admin) {
         if(isDev){
             folder = "upload_from_authors";
         }else {
-            folder = early ? "early_access" : 'articles';
+            folder = early ? "early_releases" : 'articles';
         }
+
+        folder = early ? "early_releases" : 'articles';
         const articlePath = `${folder}/${id}.json`;
 
         // Reference the file from the Firebase Storage bucket

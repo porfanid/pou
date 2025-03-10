@@ -84,11 +84,15 @@ async function handler(req, res) {
 
         const oldRef = db.ref(`articlesList/${folder}/${oldData.file.category}/${oldData.file.slug}`)
         await oldRef.remove()
-        const newRef = db.ref(`articlesList/${folder}/${fileData.category}/${fileData.slug}`)
+        const newRef = db.ref(`articlesList/${folder}/${fileData.category}/${file.slug}`)
         await newRef.set(fileData)
+        console.log(fileData);
+        console.log(file)
+        console.log(oldData);
+        console.log(`Wrote data to articlesList/${folder}/${fileData.category}/${fileData.slug}`);
 
         if(oldData.data.fileData.slug!==fileData.slug){
-            const newFileRef = storage.file(`${folder}/${fileData.slug}.json`);
+            const newFileRef = storage.file(`${folder}/${file.slug}.json`);
             await fileRef.move(newFileRef);
             if(!fileData.img01){
                 await renameImages(oldData.file.slug, fileData.slug)
