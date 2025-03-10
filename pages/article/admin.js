@@ -14,8 +14,6 @@ const AdminPublishSystem = () => {
     const [socials, setSocials] = useState({facebook: "", instagram: "", spotify: "", youtube: ""});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [earlyReleasesError, setEarlyReleasesError] = useState("");
-    const [alreadyPublishedError, setAlreadyPublishedError] = useState("");
     const [files, setFiles] = useState([]);
     const [earlyReleases, setEarlyReleases] = useState([]);
     const [publishedFiles, setPublishedFiles] = useState([]);
@@ -134,17 +132,26 @@ const AdminPublishSystem = () => {
         const isConfirmed = window.confirm(`Are you sure you want to delete the file "${file.title || file.slug}"?`);
         if (!isConfirmed) return;
 
+        let folder = "upload_from_authors";
+        if (isAlreadyPublished) {
+            folder = "articles";
+        }
+        if (isEarlyReleased) {
+            folder = "early_releases";
+        }
+
         setLoading(true);
+        setError(null);
         try {
             const response = await fetch('/api/articles/delete', {
-                method: 'POST',
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.idToken}`
                 },
                 body: JSON.stringify({
                     file,
-                    isAlreadyPublished,
-                    isEarlyReleased
+                    folder
                 }),
             });
 
@@ -312,16 +319,12 @@ const AdminPublishSystem = () => {
                 <div className="mb-4">
                     <h2 className="text-white mb-3">Early Releases <span className="text-info text-sm">Click on an article to copy the link</span>
                     </h2>
-                    {earlyReleasesError && <div
-                        className="alert alert-danger p-3 bg-red-600 text-white rounded">{earlyReleasesError}</div>}
                     {handleShowList(earlyReleases, false, true, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, false, true, articleCardProps, roles))}
                 </div>
 
                 <div className="mb-4">
                     <h2 className="text-white mb-3">Already Published <span className="text-info text-sm">Click on an article to copy the link</span>
                     </h2>
-                    {alreadyPublishedError && <div
-                        className="alert alert-danger p-3 bg-red-600 text-white rounded">{alreadyPublishedError}</div>}
                     {handleShowList(publishedFiles, true, false, sortByCategory, sortByDate, renderCategoryCards, (file) => RenderArticleCard(file, true, false, articleCardProps, roles))}
                 </div>
 
