@@ -1,8 +1,8 @@
 import { useState} from "react";
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
-import { auth } from "../firebase/config";
+import { auth } from "../../firebase/config";
 import Link from "next/link";
-import RulesModal from "../components/RulesModal";
+import RulesModal from "../../components/RulesModal";
 
 export default function Register() {
     const [email, setEmail] = useState("");
