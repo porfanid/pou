@@ -125,6 +125,9 @@ const RenderArticleCard = ( file, isAlreadyPublished, isEarlyReleased, handlers,
                             }}
                             className="text-blue-500 hover:underline">
                             {cardTitle}
+                            <br/>
+                            <hr/>
+                            {file.slug}
                         </a>
                     ) : (
                         <div className="text-white">{cardTitle}</div>

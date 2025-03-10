@@ -39,25 +39,39 @@ const AdminPublishSystem = () => {
         });
     }, [roles]);
 
+    const setSlug = (regularFiles)=>{
+        Object.keys(regularFiles).forEach(key => {
+            Object.keys(regularFiles[key]).forEach(article => {
+                if (!regularFiles[key][article].slug) {
+                    console.log("Article = ", regularFiles[key][article])
+                    console.log("Slug = ", article);
+                    regularFiles[key][article].slug = article;
+                    console.log("New zArticle = ", regularFiles[key][article])
+                }
+            });
+        });
+        return regularFiles;
+    }
+
     const fetchAllFiles = async () => {
         try {
             // Fetch regular files
             const regularResponse = await fetch('/api/articles/list');
             if (!regularResponse.ok) throw new Error('Failed to fetch regular files');
             const regularData = await regularResponse.json();
-            setFiles(regularData.files || []);
+            setFiles(setSlug(regularData.files) || []);
 
             // Fetch early releases
             const earlyResponse = await fetch('/api/articles/list?type=early');
             if (!earlyResponse.ok) throw new Error('Failed to fetch early releases');
             const earlyData = await earlyResponse.json();
-            setEarlyReleases(earlyData.files || []);
+            setEarlyReleases(setSlug(earlyData.files) || []);
 
             // F`etch published files
             const publishedResponse = await fetch('/api/articles/list?type=published');
             if (!publishedResponse.ok) throw new Error('Failed to fetch published files');
             const publishedData = await publishedResponse.json();
-            setPublishedFiles(publishedData.files || []);
+            setPublishedFiles(setSlug(publishedData.files) || []);
         } catch (err) {
             setError(`Error fetching files: ${err.message}`);
         }
@@ -70,16 +84,21 @@ const AdminPublishSystem = () => {
         }));
     };
 
-    const handleChange = (e, field, isSocial) => {
+    const handleChange = (e, field, isSocial, isObject) => {
+        let value =e.target.value;
+        if(isObject){
+            value = JSON.parse(value)
+        }
+
         if (isSocial) {
             setSocials({
                 ...socials,
-                [field]: e.target.value,
+                [field]: value,
             });
         } else {
             setFileData({
                 ...fileData,
-                [field]: e.target.value,
+                [field]: value,
             });
         }
     };
@@ -176,6 +195,7 @@ const AdminPublishSystem = () => {
             folder = "early_releases";
         }
         setFolder(folder)
+        console.log(file);
         try {
             const response = await fetch(`/api/articles/get?name=${file.slug}&folder=${folder}`);
             if (!response.ok) {
@@ -401,6 +421,15 @@ const AdminPublishSystem = () => {
                                     type="text"
                                     value={fileData.slug || ""}
                                     onChange={(e) => handleChange(e, "slug")}
+                                    className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm mb-1">Translations</label>
+                                <input
+                                    type="text"
+                                    value={JSON.stringify(fileData.translations) || ""}
+                                    onChange={(e) => handleChange(e, "translations", false, true)}
                                     className="w-full p-2 bg-gray-800 text-white border-2 border-red-800 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
                                 />
                             </div>
