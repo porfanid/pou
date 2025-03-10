@@ -27,9 +27,6 @@ export default function Loading() {
                 <div className="absolute inset-0 animate-pulse bg-red-900 opacity-10 blur-3xl"></div>
             </div>
 
-            {/* Metal-style chains overlay */}
-            <div className="absolute inset-0 bg-[url('/chains_overlay.png')] bg-repeat opacity-20"></div>
-
             {/* Glitching skull flickers */}
             <div
                 className='absolute w-20 h-20 sm:w-32 sm:h-32 opacity-100 animate-glitch top-5 left-5 sm:top-10 sm:left-10 mix-blend-overlay'>

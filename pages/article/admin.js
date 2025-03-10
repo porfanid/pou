@@ -201,18 +201,30 @@ const AdminPublishSystem = () => {
         }
     };
 
-    const handlePublish = async (toNormal, file, isEarlyReleased) => {
+    const handlePublish = async (toNormal, file, isEarlyReleased, isAlreadyPublished, undo = false) => {
         setLoading(true);
+
+        let folder = "upload_from_authors";
+        if (isAlreadyPublished) {
+            folder = "articles";
+        }
+        if (isEarlyReleased) {
+            folder = "early_releases";
+        }
+
         try {
             const response = await fetch('/api/articles/publish', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.idToken}`
                 },
                 body: JSON.stringify({
                     file,
                     toNormal,
-                    isEarlyReleased
+                    isEarlyReleased,
+                    folder,
+                    undo
                 }),
             });
 
@@ -224,7 +236,7 @@ const AdminPublishSystem = () => {
             showToastNotification('Article published successfully!');
             fetchAllFiles(); // Refresh the lists
         } catch (err) {
-            setError(`Error publishing file: ${err.message}`);
+            setError(`Error publishing article: ${err.message}`);
         } finally {
             setLoading(false);
         }

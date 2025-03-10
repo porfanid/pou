@@ -14,7 +14,7 @@ export default async function handler(req, res) {
         let folderPath = 'upload_from_authors/';
 
         if (type === 'early') {
-            folderPath = 'earlyReleases/';
+            folderPath = 'early_releases/';
         } else if (type === 'published') {
             folderPath = 'articles/';
         }

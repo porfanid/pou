@@ -12,10 +12,13 @@ const RenderArticleCard = ( file, isAlreadyPublished, isEarlyReleased, handlers,
         const isAuthor = userRoles.isAuthor && user.uid === (file.translatedBy || file.author);
         const isLeader = userRoles.isLeader;
         const isAdmin = userRoles.isAdmin;
+
+
         const canEdit = (isLeader || isAuthor) && !isAlreadyPublished && !isEarlyReleased;
-        const canDelete = !isLeader && !isAuthor;
-        const canPublishNormal = !isAlreadyPublished && isEarlyReleased && !isLeader && !isAuthor;
-        const canPublishEarly = !isAlreadyPublished && !isEarlyReleased && !isLeader && !isAuthor;
+        const canDelete = isAdmin;
+        const canPublishNormal = !isAlreadyPublished && isEarlyReleased && isAdmin;
+        const canPublishEarly = !isAlreadyPublished && !isEarlyReleased && isAdmin;
+        const canUndo = (isAlreadyPublished || isEarlyReleased) && isAdmin;
 
         if (canEdit || canDelete || canPublishNormal || canPublishEarly || isAdmin) {
             return (
@@ -33,7 +36,7 @@ const RenderArticleCard = ( file, isAlreadyPublished, isEarlyReleased, handlers,
                         </button>
                     )}
 
-                    {(canDelete || isAdmin) && (
+                    {(canDelete) && (
                         <button
                             className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 w-full sm:w-auto"
                             onClick={(e) => {
@@ -46,27 +49,40 @@ const RenderArticleCard = ( file, isAlreadyPublished, isEarlyReleased, handlers,
                         </button>
                     )}
 
-                    {(canPublishNormal || isAdmin) && (
+                    {(canUndo) && (
+                        <button
+                            className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 w-full sm:w-auto"
+                            onClick={(e)=>{
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handlePublish(true, file, isEarlyReleased, isAlreadyPublished, true);
+                            }}
+                            >
+                            Undo
+                        </button>
+                    )}
+
+                    {(canPublishNormal) && (
                         <button
                             className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 w-full sm:w-auto"
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handlePublish(false, file, isEarlyReleased);
+                                handlePublish(true, file, isEarlyReleased, isAlreadyPublished);
                             }}
                         >
                             Normal
                         </button>
                     )}
 
-                    {(canPublishEarly || isAdmin) && (
+                    {(canPublishEarly) && (
                         <>
                             <button
                                 className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 w-full sm:w-auto"
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handlePublish(false, file, isEarlyReleased);
+                                    handlePublish(false, file, isEarlyReleased, isAlreadyPublished);
                                 }}
                             >
                                 Early
@@ -76,7 +92,7 @@ const RenderArticleCard = ( file, isAlreadyPublished, isEarlyReleased, handlers,
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handlePublish(true, file, isEarlyReleased);
+                                    handlePublish(true, file, isEarlyReleased, isAlreadyPublished);
                                 }}
                             >
                                 Publish Normal

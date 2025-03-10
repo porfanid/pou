@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, database } from "../firebase/config";
-import { onAuthStateChanged } from "firebase/auth";
+import {onAuthStateChanged, onIdTokenChanged} from "firebase/auth";
 import { get, onValue, ref } from "firebase/database";
 import Loading from "../components/Loading/Loading";  // Import your loading component
 
@@ -20,6 +20,18 @@ export const AuthProvider = ({ children }) => {
         console.log(exists)
         return exists;
     }
+
+    useEffect(()=>{
+        const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+            setUser((user)=>{
+                if(!user) {
+                    return user;
+                }
+                return {...user, idToken:firebaseUser.getIdToken()};
+            })//await firebaseUser.getIdToken();
+        });
+        return ()=>unsubscribe();
+    },[])
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -93,7 +105,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         const notificationsRef = ref(database, `users/${user.uid}/notifications`);
-        return onValue(notificationsRef, (notificationsSnapshot) => {
+        onValue(notificationsRef, (notificationsSnapshot) => {
             const notificationsData = notificationsSnapshot.val();
             const notifications = notificationsData ? Object.values(notificationsData) : [];
             setNotifications(notifications);
