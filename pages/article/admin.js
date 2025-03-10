@@ -21,10 +21,6 @@ const AdminPublishSystem = () => {
     const [toastMessage, setToastMessage] = useState("");
     const [oldData, setOldData] = useState({});
     const [folder, setFolder] = useState("");
-    const [file, setFile] = useState({});
-    const [ isAlreadyPublished, setIsAlreadyPublished] = useState(false);
-    const [isEarlyReleased, setIsEarlyReleased] = useState(false);
-
     const {user, roles} = useAuth();
 
 
@@ -161,7 +157,7 @@ const AdminPublishSystem = () => {
             }
 
             showToastNotification('Article deleted successfully!');
-            fetchAllFiles(); // Refresh the lists
+            await fetchAllFiles(); // Refresh the lists
         } catch (err) {
             setError(`Error deleting file: ${err.message}`);
         } finally {
@@ -172,9 +168,6 @@ const AdminPublishSystem = () => {
     const handleEdit = async (file, isAlreadyPublished, isEarlyReleased) => {
         setLoading(true);
         setError("");
-        setFile(file)
-        setIsAlreadyPublished(isAlreadyPublished)
-        setIsEarlyReleased(isEarlyReleased)
         let folder = "upload_from_authors";
         if (isAlreadyPublished) {
             folder = "articles";
@@ -241,7 +234,7 @@ const AdminPublishSystem = () => {
             }
 
             showToastNotification('Article published successfully!');
-            fetchAllFiles(); // Refresh the lists
+            await fetchAllFiles(); // Refresh the lists
         } catch (err) {
             setError(`Error publishing article: ${err.message}`);
         } finally {
@@ -250,8 +243,9 @@ const AdminPublishSystem = () => {
     };
 
     const copyLinkToClipboard = (link) => {
-        navigator.clipboard.writeText(window.location.origin + link);
-        showToastNotification('Link copied to clipboard!');
+        navigator.clipboard.writeText(window.location.origin + link).then(() => {
+            showToastNotification('Link copied to clipboard!');
+        });
     };
 
     const showToastNotification = (message) => {
