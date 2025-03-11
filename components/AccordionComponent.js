@@ -31,7 +31,7 @@ export function AccordionComponent({ articles }) {
                                 <Image
                                     width={800}
                                     height={500}
-                                    src={`/assets/${articlelink}`}
+                                    src={`https://pulse-of-the-underground.com/assets/${articlelink}`}
                                     alt={article.title}
                                     className="w-full h-48 object-cover rounded-md mb-3 border border-red-800 shadow-md shadow-red-900"
                                 />

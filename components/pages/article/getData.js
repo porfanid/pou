@@ -61,7 +61,7 @@ export async function getServerSidePropsGeneric(context, early, admin) {
             description: article.description || "Stay brutal and explore the unknown metal news, reviews, and features!",
             image: encodeURI(article.img01 ||`https://pulse-of-the-underground.com/assets/${id}`),
             type: "article",
-            url: `https://pulse-of-the-underground.com/articles/${id}`
+            url: `https://pulse-of-the-underground.com/article/${id}`
         };
 
 
