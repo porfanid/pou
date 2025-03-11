@@ -1,6 +1,4 @@
 import * as admin from "../../firebase/adminConfig";
-import { spawn } from 'child_process';
-import stream from 'stream';
 import vision from '@google-cloud/vision';
 
 const bucket = await admin.storage();
