@@ -1,8 +1,10 @@
 import * as admin from "../../firebase/adminConfig";
 import { spawn } from 'child_process';
 import stream from 'stream';
+import vision from '@google-cloud/vision';
 
 const bucket = await admin.storage();
+const client = new vision.ImageAnnotatorClient();
 
 export default async function handler(req, res) {
     if (req.method !== "GET") {
@@ -75,36 +77,32 @@ export default async function handler(req, res) {
 }
 
 
-function getImageDimensionsBuffer(buffer) {
-    return new Promise((resolve, reject) => {
-        const identifyProcess = spawn('identify', ['-format', '%wx%h', '-']);
+async function getImageDimensionsBuffer(buffer) {
+    try {
+        const [result] = await client.cropHints({ image: { content: buffer } });
 
-        // Write buffer to the stdin of the identify process
-        const bufferStream = new stream.PassThrough();
-        bufferStream.end(buffer);
-        bufferStream.pipe(identifyProcess.stdin);
+        const hints = result.cropHintsAnnotation?.cropHints;
 
-        let decodedStdout = '';
+        if (!hints || hints.length === 0) {
+            throw new Error('No crop hints found');
+        }
 
-        identifyProcess.stdout.on('data', (chunk) => {
-            decodedStdout += chunk.toString();
-        });
+        const vertices = hints[0].boundingPoly.vertices;
 
-        identifyProcess.stderr.on('data', (error) => {
-            console.error('Error:', error.toString());
-            reject(new Error('Failed to identify image dimensions'));
-        });
+        if (vertices.length < 3) {
+            throw new Error('Not enough vertices found in bounding poly');
+        }
 
-        identifyProcess.on('close', (code) => {
-            if (code === 0) {
-                const [width, height] = decodedStdout.trim().split('x');
-                resolve({width: parseInt(width, 10), height: parseInt(height, 10)});
-            } else {
-                reject(new Error('identify command failed'));
-            }
-        });
-    });
+        const width = vertices[1].x - vertices[0].x;
+        const height = vertices[2].y - vertices[0].y;
+
+        return { width, height };
+    } catch (error) {
+        console.error('Error identifying image dimensions:', error);
+        throw new Error('Failed to identify image dimensions');
+    }
 }
+
 
 
 function changeAnalysis(
