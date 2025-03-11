@@ -153,6 +153,8 @@ const TopNews = ({articles, categories}) => {
         return acc;
     }, {});
 
+    console.log(articles[0])
+
     const filteredArticles =
         selectedCategory === "All" ? articles : articles.filter((article) => article.category === selectedCategory);
 
@@ -193,7 +195,7 @@ const TopNews = ({articles, categories}) => {
                                     <div key={index}
                                          className="bg-[#150000] rounded-lg overflow-hidden shadow-lg transition-transform transform hover:scale-105">
                                         <img
-                                            src={article.image}
+                                            src={article.img01}
                                             className="w-full h-64 object-cover"
                                             alt={article.title}
                                         />

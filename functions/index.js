@@ -100,9 +100,15 @@ exports.updateLatestArticlesV2 = functions
         await updateLatestArticles();
     })
 
+const getSevenDaysAgo = () => {
+    const today = new Date();
+    today.setDate(today.getDate() - 7);
+    return today;
+};
+
 const updateLatestArticles = async () => {
     try {
-        const articlesListSnapshot = await database.ref(`/articlesList`).once('value');
+        const articlesListSnapshot = await admin.database().ref(`/articlesList`).once('value');
         const articlesList = articlesListSnapshot.val() || {};
 
         const sevenDaysAgo = getSevenDaysAgo();
@@ -132,7 +138,7 @@ const updateLatestArticles = async () => {
         });
 
         // Store latest articles in /articlesListLatest
-        await database.ref(`/articlesListLatest`).set(latestArticles);
+        await admin.database().ref(`/articlesListLatest`).set(latestArticles);
 
         console.log("Updated articlesListLatest with the last 7 days of articles.");
     } catch (error) {
