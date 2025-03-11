@@ -195,7 +195,7 @@ const TopNews = ({articles, categories}) => {
                                     <div key={index}
                                          className="bg-[#150000] rounded-lg overflow-hidden shadow-lg transition-transform transform hover:scale-105">
                                         <img
-                                            src={article.img01}
+                                            src={`/assets/${article.link}`}
                                             className="w-full h-64 object-cover"
                                             alt={article.title}
                                         />
