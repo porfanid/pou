@@ -32,7 +32,7 @@ const SocialBar = ({ articleTitle }) => {
         <div className="social-bar flex flex-col items-center justify-center p-4 bg-black text-white border border-red-700 rounded-lg">
             <h3 className="text-lg font-bold mb-3 text-red-500 gothic-font">Share this article</h3>
 
-            <div className="flex gap-4">
+            <div className="gap-4">
                 {currentPage && (
                     <>
                         <FacebookShareButton url={currentPage} quote={shareMessage} hashtag={hashtags}>

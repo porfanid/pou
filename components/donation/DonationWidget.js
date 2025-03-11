@@ -47,7 +47,7 @@ const DonationWidget = () => {
             {/* Floating Donation Button */}
             <button
                 className="bg-black text-red-600 border-2 border-red-600 p-3 rounded-full shadow-lg
-                hover:bg-red-600 hover:text-black transition-all"
+    hover:bg-red-600 hover:text-black transition-all max-w-full"
                 onClick={() => setIsOpen(!isOpen)}
             >
                 {isOpen ? <X size={24} /> : "Donate"}

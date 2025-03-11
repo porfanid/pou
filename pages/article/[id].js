@@ -20,9 +20,9 @@ export default function ArticlePage({ article, error, metatags }) {
     return (
         <>
             <article className="max-w-7xl mx-auto p-4">
-                <h1 className="mt-10 mb-10 text-4xl md:text-5xl font-extrabold text-transparent bg-gradient-to-r from-titleStart to-titleRed bg-clip-text text-center animate-gradient-animation">
+                <h2 className="mt-10 mb-10 text-xl md:text-5xl font-extrabold text-transparent bg-gradient-to-r from-titleStart to-titleRed bg-clip-text text-center animate-gradient-animation break-words">
                     {title}
-                </h1>
+                </h2>
 
                 {/* Author Section */}
                 <div className="max-w-[50%]">
@@ -74,10 +74,9 @@ export default function ArticlePage({ article, error, metatags }) {
 
                 {/* Content Section */}
                 <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-8 mb-4">
-                    <div>
-                        <Image layout="responsive" width={800} height={500} src={img01} alt={title}
-                               className="w-full object-cover rounded mb-4" />
-                        <p className="lead">
+                    <div className="relative w-full h-0 pb-[62.5%] mb-4">
+                        <Image layout="fill" objectFit="cover" src={img01} alt={title} className="rounded" />
+                        <p className="lead mt-4">
                             <span dangerouslySetInnerHTML={{ __html: details }}></span>
                         </p>
                     </div>
