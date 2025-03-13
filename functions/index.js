@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const axios = require("axios");
 const serviceAccount = require("./heavy-local-admin.json")
@@ -96,7 +96,7 @@ exports.syncNewUserToDatabase = functions.identity.beforeUserSignedIn({ timeoutS
 });
 
 exports.updateLatestArticlesV2 = functions
-    .database.onValueUpdated('/articlesList/',async (event)=> {
+    .database.onValueWritten('/articlesList/',async (event)=> {
         await updateLatestArticles();
     })
 

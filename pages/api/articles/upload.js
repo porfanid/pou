@@ -93,7 +93,7 @@ async function handler(req, res) {
                 language,
                 sub: uid,
                 slug: sanitizedSlug,
-                date: new Date().toLocaleDateString('en-GB', options),
+                date: new Date().toISOString().split('T')[0],
                 authorApproved: true,
                 isReady: true,
             };

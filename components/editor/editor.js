@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, } from "react";
-import { EditorState, RichUtils, convertToRaw, Modifier } from "draft-js";
+import { EditorState, RichUtils, convertToRaw, Modifier, CompositeDecorator } from "draft-js";
 import Toolbar from "./toolbar";
 import createImagePlugin from "@draft-js-plugins/image";
 import Editor from "@draft-js-plugins/editor";
@@ -9,6 +9,38 @@ import { stateToHTML } from 'draft-js-export-html';
 // Initialize the image plugin
 const imagePlugin = createImagePlugin();
 const plugins = [imagePlugin];
+
+// Link decorator component
+const Link = (props) => {
+    const { url } = props.contentState.getEntity(props.entityKey).getData();
+    return (
+        <a href={url} className="text-red-600 underline" style={{ color: "#af0000", textDecoration: "underline" }}>
+            {props.children}
+        </a>
+    );
+};
+
+// Function to find link entities
+const findLinkEntities = (contentBlock, callback, contentState) => {
+    contentBlock.findEntityRanges(
+        (character) => {
+            const entityKey = character.getEntity();
+            return (
+                entityKey !== null &&
+                contentState.getEntity(entityKey).getType() === 'LINK'
+            );
+        },
+        callback
+    );
+};
+
+// Create decorator for links
+const createDecorator = () => new CompositeDecorator([
+    {
+        strategy: findLinkEntities,
+        component: Link,
+    },
+]);
 
 export const exportOptions = {
     inlineStyles: {
@@ -21,6 +53,25 @@ export const exportOptions = {
         SUBSCRIPT: {element: 'sub'},
         STRIKETHROUGH: {element: 's'},
         CODE: {element: 'code', style: {display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.05)', fontFamily: 'monospace', padding: '0.5em'}},
+    },
+    entityStyleFn: (entity) => {
+        const entityType = entity.get('type').toLowerCase();
+        if (entityType === 'link') {
+            const data = entity.getData();
+            return {
+                element: 'a',
+                attributes: {
+                    href: data.url,
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                },
+                style: {
+                    color: '#af0000',
+                    textDecoration: 'underline',
+                }
+            };
+        }
+        return null;
     },
     blockStyleFn: (block) => {
         const type = block.getType();
@@ -179,7 +230,7 @@ const DraftEditor = ({editorState, setEditorState}) => {
             backgroundColor: "#1a1a1a", // theme(colors.card)
             borderRadius: "0.375rem", // theme(borderRadius.md)
             padding: "1rem" // theme(spacing.4)
-        },
+        }
     };
 
     // Function to apply text transformation (uppercase/lowercase)
@@ -285,6 +336,11 @@ const DraftEditor = ({editorState, setEditorState}) => {
             </div>
         </div>
     );
+};
+
+// Creating editor with decorator
+export const createEditorWithDecorator = () => {
+    return EditorState.createEmpty(createDecorator());
 };
 
 export default DraftEditor;

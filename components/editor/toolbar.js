@@ -10,6 +10,7 @@ import {
     faCode,
     faHighlighter,
     faItalic,
+    faLink,
     faListOl,
     faListUl,
     faQuoteRight,
@@ -20,13 +21,12 @@ import {
     faUnderline,
     faImage,
 } from "@fortawesome/free-solid-svg-icons";
-import { RichUtils, EditorState } from "draft-js";
+import { RichUtils, EditorState, Modifier } from "draft-js";
 
 const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, applyTextTransform }) => {
     const fileInputRef = useRef(null);
 
     const tools = [
-        // Bold button with actual document styling
         { label: "bold", style: "BOLD", icon: <FontAwesomeIcon icon={faBold}/>, method: "inline" },
         { label: "italic", style: "ITALIC", icon: <FontAwesomeIcon icon={faItalic} />, method: "inline" },
         { label: "underline", style: "UNDERLINE", icon: <FontAwesomeIcon icon={faUnderline} />, method: "inline" },
@@ -45,9 +45,9 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, appl
         { label: "Center", style: "centerAlign", icon: <FontAwesomeIcon icon={faAlignCenter} transform="grow-2" />, method: "block" },
         { label: "Right", style: "rightAlign", icon: <FontAwesomeIcon icon={faAlignRight} transform="grow-2" />, method: "block" },
         { label: "Image", icon: <FontAwesomeIcon icon={faImage} />, method: "image" },
+        { label: "Link", icon: <FontAwesomeIcon icon={faLink} />, method: "link" },
     ];
 
-    // Header tools with custom styling to show actual style
     const headerTools = [
         { label: "H1", style: "header-one", method: "block", className: "font-heading text-lg" },
         { label: "H2", style: "header-two", method: "block", className: "text-base font-bold" },
@@ -67,7 +67,62 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, appl
             fileInputRef.current.click();
         } else if (method === "transform") {
             applyTextTransform(style);
+        } else if (method === "link") {
+            const selection = editorState.getSelection();
+            const selectedText = getSelectedText(editorState);
+
+            if (selectedText) {
+                // If we already have a link, remove it
+                if (hasLinkEntity(editorState)) {
+                    setEditorState(RichUtils.toggleLink(editorState, selection, null));
+                    return;
+                }
+
+                const url = prompt("Enter the URL", "https://");
+                if (url) {
+                    const contentState = editorState.getCurrentContent();
+                    const contentStateWithEntity = contentState.createEntity('LINK', 'MUTABLE', { url });
+                    const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+                    const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
+                    setEditorState(RichUtils.toggleLink(newEditorState, selection, entityKey));
+                }
+            } else {
+                alert("Please select some text first to create a link");
+            }
         }
+    };
+
+    // Helper to get selected text
+    const getSelectedText = (editorState) => {
+        const selection = editorState.getSelection();
+        const currentContent = editorState.getCurrentContent();
+        const startKey = selection.getStartKey();
+        const endKey = selection.getEndKey();
+        const startOffset = selection.getStartOffset();
+        const endOffset = selection.getEndOffset();
+
+        if (startKey === endKey) {
+            return currentContent.getBlockForKey(startKey).getText().slice(startOffset, endOffset);
+        }
+
+        // Handle multi-block selection if needed
+        return "";
+    };
+
+    // Check if the current selection has a link entity
+    const hasLinkEntity = (editorState) => {
+        const selection = editorState.getSelection();
+        if (selection.isCollapsed()) {
+            return false;
+        }
+
+        const contentState = editorState.getCurrentContent();
+        const startKey = selection.getStartKey();
+        const startOffset = selection.getStartOffset();
+        const blockWithLinkAtBeginning = contentState.getBlockForKey(startKey);
+        const linkKey = blockWithLinkAtBeginning.getEntityAt(startOffset);
+
+        return linkKey !== null && contentState.getEntity(linkKey).getType() === 'LINK';
     };
 
     const handleFileChange = (e) => {
@@ -75,9 +130,9 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, appl
         if (file) {
             const reader = new FileReader();
             reader.onload = () => {
-                const contentState = editorState.getCurrentContent(); // Get current content
+                const contentState = editorState.getCurrentContent();
                 const newEditorState = imagePlugin.addImage(
-                    EditorState.push(editorState, contentState, 'insert-fragment'), // Preserve content
+                    EditorState.push(editorState, contentState, 'insert-fragment'),
                     reader.result
                 );
                 setEditorState(newEditorState);
@@ -97,16 +152,17 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, appl
         } else if (method === "inline") {
             const currentStyle = editorState.getCurrentInlineStyle();
             return currentStyle.has(style);
+        } else if (method === "link") {
+            return hasLinkEntity(editorState);
         }
         return false;
     };
 
-    // Generate style classes based on the tool type
     const getButtonStyle = (item) => {
         let baseStyle = `p-2 transition-colors duration-200 hover:text-white focus:outline-none`;
 
-        // If item is active, add active style
-        if (isActive(item.style, item.method)) {
+        if ((item.method === "link" && hasLinkEntity(editorState)) ||
+            (item.method !== "link" && isActive(item.style, item.method))) {
             return `${baseStyle} text-white bg-red-900 rounded`;
         } else {
             return `${baseStyle} text-red-600`;
@@ -115,7 +171,6 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, appl
 
     return (
         <div className="p-2 border-b border-gray-800 mb-2">
-            {/* Main toolbar with formatting options */}
             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mb-2">
                 {tools.map((item, idx) => (
                     <button
@@ -130,7 +185,6 @@ const Toolbar = ({ imagePlugin, editorState, setEditorState, onImageUpload, appl
                 ))}
             </div>
 
-            {/* Heading toolbar - display headings with actual styling */}
             <div className="gap-2 pt-1 border-t border-gray-800">
                 <span className="flex items-center mr-2 text-gray-400">
                     Headers:
