@@ -108,7 +108,7 @@ async function handler(req, res) {
                 sub: uid,
                 img01: imageUrl,
                 slug: sanitizedSlug,
-                date: new Date().toLocaleDateString('en-GB', options),
+                date: new Date().toISOString().split('T')[0],
             };
 
             // Upload articles JSON to Firebase Storage
