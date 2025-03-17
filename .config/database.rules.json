@@ -8,8 +8,8 @@
         "photoURL": {
           ".read": true
         },
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": "auth != null && (auth.uid === $uid || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())",
+        ".write": "auth != null && (auth.uid === $uid || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())"
       }
     },
     "users": {
@@ -20,8 +20,8 @@
         "photoURL": {
           ".read": true
         },
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": true,
+        ".write": true
       }
     },
     "bands": {
@@ -32,13 +32,13 @@
         "photoURL": {
           ".read": true
         },
-        ".read": "auth != null && auth.uid === $bandId",
-        ".write": "auth != null && auth.uid === $bandId"
+        ".read": "auth != null && (auth.uid === $bandId || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())",
+        ".write": "auth != null && (auth.uid === $bandId || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())"
       }
     },
     "roles": {
       ".read": "auth != null",
-      ".write": false
+      ".write": "auth != null && root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists()"
     },
     "comments": {
       ".read": true,
