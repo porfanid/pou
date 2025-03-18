@@ -84,8 +84,9 @@ export default function ArticlePage({ article, error, metatags }) {
                         {/* Blurred Frame */}
                         <div className="absolute inset-0 bg-gray-500 opacity-25 rounded-lg backdrop-blur-lg z-10" />
                         <div
-                            className="prose max-w-none relative z-20 break-words break-all overflow-hidden text-white"
+                            className="prose max-w-none relative z-20 overflow-hidden text-white"
                             dangerouslySetInnerHTML={{ __html: content }}
+                            style={{ wordBreak: 'break-word', overflowWrap: 'break-all', textAlign: 'justify' }}
                         />
 
                     </div>
@@ -141,6 +142,10 @@ export default function ArticlePage({ article, error, metatags }) {
                 .social-icon:hover {
                     transform: scale(1.1);
                     box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+                }
+
+                .prose a {
+                    word-break: break-word;
                 }
             `}</style>
         </>
