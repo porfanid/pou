@@ -55,6 +55,7 @@ export async function getServerSidePropsGeneric(context, early, admin) {
         }
 
         article.img01=encodeURI(article.img01 ||`${siteUrl}/assets/${id}`)
+        article.id = id;
 
         const metaTags = {
             title: article.title || "Pulse Of The Underground",
