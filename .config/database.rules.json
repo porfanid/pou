@@ -30,6 +30,12 @@
         ".write": "auth != null && (!data.exists() || auth.uid === data.child('user').val() || auth.token.roles.comments === true)"
       }
     },
+    "reported_comments": {
+      ".read": "auth != null && auth.token.roles.comments === true",
+      "$commentId": {
+        ".write": "auth != null && (!data.exists() || auth.token.roles.comments === true)"
+      }
+    },
     ".read": false,
     ".write": false
   }

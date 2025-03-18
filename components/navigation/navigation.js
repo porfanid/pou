@@ -86,6 +86,10 @@ const AppNavigation = () => {
                             Users
                         </Link>)}
 
+                    {roles&&roles.comments && (<Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/comments">
+                        Comments
+                    </Link>)}
+
 
                     <Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/youtube">
                         Youtube Videos
