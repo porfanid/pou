@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { auth, database, storage } from "../../firebase/config";
+import { database, storage } from "../../firebase/config";
 import { get, onValue, ref, update } from "firebase/database";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { useRouter } from "next/router";
-/*import { disableUser, setClaims } from "../UploadSystem/articleData/articleData";*/
 import { useAuth } from "../../context/AuthContext";
 
 const AdminSystem = ({ initialUsers, initialRoles }) => {
-    const { user: currentUser } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const [users, setUsers] = useState(initialUsers || {});
     const [roles, setRoles] = useState(initialRoles || {});
@@ -21,10 +20,10 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
     const roleMapping = { Author: "admin", Band: "band" };
 
     useEffect(() => {
-        if (!currentUser) return;
+        if (!user) return;
 
-        const isAdmin = currentUser.email === "pavlos@orfanidis.net.gr" ||
-            (roles.admin && roles.admin.includes(currentUser.email));
+        const isAdmin = user.email === "pavlos@orfanidis.net.gr" ||
+            (roles.admin && roles.admin.includes(user.email));
 
         if (!isAdmin) {
             router.push("/upload");
@@ -61,7 +60,7 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
             unsubscribeUsers();
             unsubscribeRoles();
         };
-    }, [currentUser, roles.admin, router]);
+    }, [user, roles.admin, router]);
 
     const toggleDisableUser = async (user) => {
         const userRef = ref(database, `authors/${user.uid}`);
@@ -69,7 +68,6 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
         const userData = userSnapshot.val();
         userData.disabled = !userData.disabled;
         await update(userRef, userData);
-        //await disableUser(user.email, true, userData.disabled);
         alert(`The user has been ${userData.disabled ? "disabled" : "enabled"} successfully!`);
     };
 
@@ -89,16 +87,33 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
         setUsernameInputs(prev => ({ ...prev, [userId]: value }));
     };
 
-    const handleRoleChange = (role, email) => {
-        const updatedRoles = { ...roles };
-        if (!updatedRoles[role]) updatedRoles[role] = [];
-        if (updatedRoles[role].includes(email)) {
-            updatedRoles[role] = updatedRoles[role].filter(userEmail => userEmail !== email);
-        } else {
-            updatedRoles[role].push(email);
+    const handleRoleChange = async (role, email, status) => {
+        console.log("Data:L ",role, email);
+        try {
+            const response = await fetch('/api//author/admin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.idToken}`
+                },
+                body: JSON.stringify({ targetUid: email, roles: { role}, status }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update roles');
+            }
+
+            const updatedRoles = { ...roles };
+            if (!updatedRoles[role]) updatedRoles[role] = [];
+            if (updatedRoles[role].includes(email)) {
+                updatedRoles[role] = updatedRoles[role].filter(userEmail => userEmail !== email);
+            } else {
+                updatedRoles[role].push(email);
+            }
+            setRoles(updatedRoles);
+        } catch (error) {
+            console.error('Error updating roles:', error);
         }
-        update(ref(database, "roles"), updatedRoles).then();
-        setRoles(updatedRoles);
     };
 
     const getUserRoles = (email) => {
@@ -113,7 +128,7 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
         );
     }
 
-    if (!currentUser || (currentUser.email !== "pavlos@orfanidis.net.gr" && (!roles.admin || !roles.admin.includes(currentUser.email)))) {
+    if (!user || (user.email !== "pavlos@orfanidis.net.gr" && (!roles.admin || !roles.admin.includes(user.email)))) {
         return (
             <div className="container mx-auto mt-10 p-6 bg-red-100 rounded-lg">
                 <h1 className="text-2xl font-bold text-red-800 mb-4">Access Denied</h1>
@@ -215,7 +230,7 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
                                 {Object.keys(roles).map((roleName) => (
                                     <button
                                         key={roleName}
-                                        onClick={() => handleRoleChange(roleName, email)}
+                                        onClick={() => handleRoleChange(roleName, email, !userRoles.includes(roleName))}
                                         className={`px-3 py-1 rounded text-sm w-full
                             ${userRoles.includes(roleName)
                                             ? "bg-blue-600 hover:bg-blue-700 text-white"

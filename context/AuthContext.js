@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
 
     async function checkIfReferenceExists(path) {
         const reference = ref(database, path);
+        console.log("Path: ",path);
         const snapshot = await get(reference);
         const exists = snapshot.exists();
         console.log(exists)
@@ -35,8 +36,7 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            console.log("Firebase User:", firebaseUser); // Debugging
-            if (firebaseUser&&firebaseUser.emailVerified) {
+            if (firebaseUser && firebaseUser.emailVerified) {
                 setUserAuth(firebaseUser);
                 const idToken = await firebaseUser.getIdToken();
                 try {
@@ -52,39 +52,39 @@ export const AuthProvider = ({ children }) => {
                     if (!response.ok) throw new Error("Failed to fetch claims");
 
                     const data = await response.json();
+                    const newRoles = data.roles.roles;
 
-                    console.log("Custom Claims:", data.roles.roles); // Debugging
-
-                    setRoles(data.roles.roles);
+                    // Only update roles if they have changed
+                    if (JSON.stringify(roles) !== JSON.stringify(newRoles)) {
+                        setRoles(newRoles);
+                    }
 
                     const userPath = `users/${firebaseUser.uid}`;
-
                     const userExistsInDb = await checkIfReferenceExists(userPath);
 
                     let userData;
-                    let unsubscribeUser=()=>{};
+                    let unsubscribeUser = () => { };
 
-                    if(!userExistsInDb){
-                        userData = firebaseUser;
-                        userData.claims = data.customClaims;
-                        userData.uid = firebaseUser.uid;
+                    if (!userExistsInDb) {
+                        userData = { ...firebaseUser, claims: data.customClaims, uid: firebaseUser.uid };
                         setUser(userData);
-                    }else {
+                    } else {
                         const userRef = ref(database, userPath);
                         unsubscribeUser = onValue(userRef, async (snapshot) => {
-                            userData = snapshot.val();
-                            if(!userData){
-                                userData = firebaseUser;
+                            const newUserData = snapshot.val() || firebaseUser;
+                            newUserData.claims = data.customClaims;
+                            newUserData.uid = firebaseUser.uid;
+                            newUserData.idToken = await firebaseUser.getIdToken();
+
+                            // Only update user if data has changed
+                            if (JSON.stringify(user) !== JSON.stringify(newUserData)) {
+                                setUser(newUserData);
                             }
-                            userData.claims = data.customClaims;
-                            userData.uid = firebaseUser.uid;
-                            userData.idToken = await firebaseUser.getIdToken();
-                            setUser(userData);
                         });
                     }
 
                     setLoading(false); // Stop loading if no user is authenticated
-                    return () => unsubscribeUser(); // ✅ Ensure cleanup
+                    return () => unsubscribeUser(); // Ensure cleanup
                 } catch (error) {
                     console.error("Error fetching custom claims:", error);
                 }
@@ -92,11 +92,11 @@ export const AuthProvider = ({ children }) => {
                 setUser(null);
                 setRoles({});
                 setNotifications([]);
+                setLoading(false); // Stop loading if no user is authenticated
             }
-            setLoading(false); // Stop loading if no user is authenticated
         });
         return () => unsubscribe();
-    }, []);
+    }, [roles]);
 
 
     useEffect(() => {

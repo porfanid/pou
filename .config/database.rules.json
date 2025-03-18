@@ -8,8 +8,8 @@
         "photoURL": {
           ".read": true
         },
-        ".read": "auth != null && (auth.uid === $uid || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())",
-        ".write": "auth != null && (auth.uid === $uid || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())"
+        ".read": "auth != null && (auth.uid === $uid)",
+        ".write": "auth != null && (auth.uid === $uid)"
       }
     },
     "users": {
@@ -20,8 +20,8 @@
         "photoURL": {
           ".read": true
         },
-        ".read": true,
-        ".write": true
+        ".read": "auth != null && (auth.uid === $uid)",
+        ".write": "auth != null && (auth.uid === $uid)"
       }
     },
     "bands": {
