@@ -69,18 +69,23 @@ const AppNavigation = () => {
                             <Link className="block text-gray-300 hover:text-red-500 p-2" href="/article">
                                 All Articles
                             </Link>
-                            {roles&&roles.isAuthor && (
+                            {roles&&roles.author && (
                                 <Link className="block text-gray-300 hover:text-red-500 p-2" href="/article/upload">
                                     Upload
                                 </Link>
                             )}
-                            {roles&&roles.isAuthor && (
+                            {roles&&roles.author && (
                                 <Link className="block text-gray-300 hover:text-red-500 p-2" href="/article/admin">
                                     Admin
                                 </Link>
                             )}
                         </div>
                     </div>
+
+                    {roles&&roles.admin && (<Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/author/admin">
+                            Users
+                        </Link>)}
+
 
                     <Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/youtube">
                         Youtube Videos

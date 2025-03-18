@@ -65,7 +65,7 @@ const listAllUsers = async (nextPageToken, auth) => {
     }else{
         result = await auth.listUsers(1000, nextPageToken);
     }
-    const adminUsers = result.users.filter(user => user.customClaims && user.customClaims.admin);
+    const adminUsers = result.users.filter(user => user.customClaims && user.customClaims.roles && user.customClaims.roles.author);
 
     if (result.pageToken) {
         // List next batch of users.

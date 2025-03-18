@@ -8,8 +8,8 @@
         "photoURL": {
           ".read": true
         },
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": "auth != null && (auth.uid === $uid)",
+        ".write": "auth != null && (auth.uid === $uid)"
       }
     },
     "users": {
@@ -20,29 +20,15 @@
         "photoURL": {
           ".read": true
         },
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": "auth != null && (auth.uid === $uid)",
+        ".write": "auth != null && (auth.uid === $uid)"
       }
-    },
-    "bands": {
-      "$bandId": {
-        "displayName": {
-          ".read": true
-        },
-        "photoURL": {
-          ".read": true
-        },
-        ".read": "auth != null && auth.uid === $bandId",
-        ".write": "auth != null && auth.uid === $bandId"
-      }
-    },
-    "roles": {
-      ".read": "auth != null",
-      ".write": false
     },
     "comments": {
       ".read": true,
-      ".write": "auth != null"
+      "$commentId": {
+        ".write": "auth != null && (!data.exists() || auth.uid === data.child('user').val() || auth.token.roles.comments === true)"
+      }
     },
     ".read": false,
     ".write": false

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { get, onValue, push, ref, remove, set, update } from 'firebase/database';
+import {onValue, push, ref, remove, set, update } from 'firebase/database';
 import { database } from '../firebase/config';
 import { CommentAuthor } from './CommentAuthor';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,7 @@ const CommentSystem = ({ articleName }) => {
     const [editedComment, setEditedComment] = useState('');
 
     const { user, roles } = useAuth();
-    const isAdmin = roles && roles.isCommentAdmin;
+    const isAdmin = roles && roles.comments;
 
     useEffect(() => {
         const commentsRef = ref(database, `comments/${articleName}`);

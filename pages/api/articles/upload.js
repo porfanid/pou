@@ -16,8 +16,7 @@ export const config = {
 async function handler(req, res) {
 
 
-    // Initialize Firebase Admin (only if not already initialized)
-    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+
 
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -29,7 +28,7 @@ async function handler(req, res) {
         return res.status(401).json({ error: 'Unauthorized: Unknown User' });
     }
 
-    if(!user.roles.isAuthor&&!user.roles.isAdmin){
+    if(!user.roles.isAuthor){
         return res.status(401).json({ error: 'Unauthorized: Not an Author' });
     }
 

@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, database } from "../firebase/config";
-import {onAuthStateChanged, onIdTokenChanged} from "firebase/auth";
+import { onAuthStateChanged, onIdTokenChanged } from "firebase/auth";
 import { get, onValue, ref } from "firebase/database";
-import Loading from "../components/Loading/Loading";  // Import your loading component
+import Loading from "../components/Loading/Loading";
 
 const AuthContext = createContext();
 
@@ -11,112 +11,122 @@ export const AuthProvider = ({ children }) => {
     const [userAuth, setUserAuth] = useState(null);
     const [roles, setRoles] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true); // New loading state
+    const [loading, setLoading] = useState(true);
 
     async function checkIfReferenceExists(path) {
         const reference = ref(database, path);
         const snapshot = await get(reference);
-        const exists = snapshot.exists();
-        console.log(exists)
-        return exists;
+        return snapshot.exists();
     }
 
-    useEffect(()=>{
-        const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
-            setUser((user)=>{
-                if(!user) {
-                    return user;
-                }
-                return {...user, idToken:firebaseUser.getIdToken()};
-            })//await firebaseUser.getIdToken();
-        });
-        return ()=>unsubscribe();
-    },[])
-
+    // Keep track of the ID token
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            console.log("Firebase User:", firebaseUser); // Debugging
-            if (firebaseUser&&firebaseUser.emailVerified) {
-                setUserAuth(firebaseUser);
-                const idToken = await firebaseUser.getIdToken();
-                try {
-                    const response = await fetch("/api/getCustomClaims", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            'Authorization': `Bearer ${idToken}`
-                        },
-                        body: JSON.stringify({ uid: "Empty" }),
-                    });
-
-                    if (!response.ok) throw new Error("Failed to fetch claims");
-
-                    const data = await response.json();
-
-                    console.log("Custom Claims:", data.roles.roles); // Debugging
-
-                    setRoles(data.roles.roles);
-
-                    const userPath = `users/${firebaseUser.uid}`;
-
-                    const userExistsInDb = await checkIfReferenceExists(userPath);
-
-                    let userData;
-                    let unsubscribeUser=()=>{};
-
-                    if(!userExistsInDb){
-                        userData = firebaseUser;
-                        userData.claims = data.customClaims;
-                        userData.uid = firebaseUser.uid;
-                        setUser(userData);
-                    }else {
-                        const userRef = ref(database, userPath);
-                        unsubscribeUser = onValue(userRef, async (snapshot) => {
-                            userData = snapshot.val();
-                            if(!userData){
-                                userData = firebaseUser;
-                            }
-                            userData.claims = data.customClaims;
-                            userData.uid = firebaseUser.uid;
-                            userData.idToken = await firebaseUser.getIdToken();
-                            setUser(userData);
-                        });
+        const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                setUser((user) => {
+                    if (!user) {
+                        return user;
                     }
-
-                    setLoading(false); // Stop loading if no user is authenticated
-                    return () => unsubscribeUser(); // ✅ Ensure cleanup
-                } catch (error) {
-                    console.error("Error fetching custom claims:", error);
-                }
-            } else {
-                setUser(null);
-                setRoles({});
-                setNotifications([]);
+                    return { ...user, idToken: firebaseUser.getIdToken() };
+                });
             }
-            setLoading(false); // Stop loading if no user is authenticated
         });
         return () => unsubscribe();
     }, []);
 
-
+    // Handle auth state changes and fetch user data
     useEffect(() => {
-        if(!user){
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser && firebaseUser.emailVerified) {
+                setUserAuth(firebaseUser);
+                const idToken = await firebaseUser.getIdToken(true); // Force refresh to get latest claims
+
+                try {
+                    // Get user claims from token
+                    const tokenResult = await firebaseUser.getIdTokenResult();
+                    const customClaims = tokenResult.claims;
+
+                    // Extract roles from custom claims
+                    const userRoles = customClaims.roles||{};
+
+                    console.log("Roles: ",customClaims.roles);
+
+
+                    // Update roles state
+                    setRoles(userRoles);
+
+                    const userPath = `users/${firebaseUser.uid}`;
+                    const userExistsInDb = await checkIfReferenceExists(userPath);
+
+                    let userData;
+                    let unsubscribeUser = () => {};
+
+                    if (!userExistsInDb) {
+                        userData = {
+                            ...firebaseUser,
+                            claims: customClaims,
+                            uid: firebaseUser.uid,
+                            idToken: idToken
+                        };
+                        setUser(userData);
+                    } else {
+                        const userRef = ref(database, userPath);
+                        unsubscribeUser = onValue(userRef, async (snapshot) => {
+                            const newUserData = snapshot.val() || {};
+
+                            // Merge Firebase Auth user data with database data
+                            const mergedUserData = {
+                                ...newUserData,
+                                email: firebaseUser.email,
+                                displayName: firebaseUser.displayName,
+                                photoURL: firebaseUser.photoURL,
+                                emailVerified: firebaseUser.emailVerified,
+                                claims: customClaims,
+                                uid: firebaseUser.uid,
+                                idToken: idToken
+                            };
+
+                            // Only update user if data has changed
+                            if (JSON.stringify(user) !== JSON.stringify(mergedUserData)) {
+                                setUser(mergedUserData);
+                            }
+                        });
+                    }
+
+                    setLoading(false);
+                    return () => unsubscribeUser();
+                } catch (error) {
+                    console.error("Error handling authentication:", error);
+                    setLoading(false);
+                }
+            } else {
+                setUser(null);
+                setRoles(null);
+                setNotifications([]);
+                setLoading(false);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Fetch user notifications
+    useEffect(() => {
+        if (!user) {
             return;
         }
 
         const notificationsRef = ref(database, `users/${user.uid}/notifications`);
-        onValue(notificationsRef, (notificationsSnapshot) => {
+        const unsubscribe = onValue(notificationsRef, (notificationsSnapshot) => {
             const notificationsData = notificationsSnapshot.val();
             const notifications = notificationsData ? Object.values(notificationsData) : [];
             setNotifications(notifications);
         });
+
+        return () => unsubscribe();
     }, [user]);
 
-
-
-
     if (loading) {
-        return <Loading />; // Show loading component while checking auth state
+        return <Loading />;
     }
 
     return (
