@@ -25,19 +25,18 @@ export const verifyIdToken = async (req, res, next) => {
         const rolesSnapshot = await rolesRef.once('value');
         const rolesData = rolesSnapshot.val() || {};
 
-        const userRoles = {}
-        if(user.claims){
-            userRoles.isBand = !!user.claims.band;
-            userRoles.isAuthor = !!user.claims.admin;
-        }
-        if(!!rolesData) {
-            userRoles.isTranslator = rolesData.translationSystem.includes(user.email);
-            userRoles.isLeader = rolesData.authorLeader.includes(user.email);
-            userRoles.isAdmin = rolesData.admin.includes(user.email);
-            userRoles.isCommentAdmin = (rolesData.comments || []).includes(user.email);
-            userRoles.isMerchAdmin = (rolesData.merch || []).includes(user.email);
-        }
 
+        const userRoles = {}
+        if(user.customClaims&& user.customClaims.roles){
+            userRoles.isBand = !!user.customClaims.roles.band;
+            userRoles.isAuthor = !!user.customClaims.roles.author;
+            userRoles.isAdmin = !!user.customClaims.roles.admin;
+            userRoles.isCommentAdmin = !!user.customClaims.roles.comments;
+            userRoles.isMerchAdmin = !!user.customClaims.roles.merch;
+            userRoles.isTranslator = !!user.customClaims.roles.translationSystem;
+            userRoles.isLeader = !!user.customClaims.roles.authorLeader;
+
+        }
         req.user = {user, roles: userRoles};
         next();
     } catch (error) {

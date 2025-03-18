@@ -9,9 +9,9 @@ const RenderArticleCard = ( file, isAlreadyPublished, isEarlyReleased, handlers,
     const user = { uid: file.author }; // Replace with actual user data from auth
 
     const renderActionButtons = (file, isAlreadyPublished, isEarlyReleased, userRoles) => {
-        const isAuthor = userRoles.isAuthor && user.uid === (file.translatedBy || file.author);
-        const isLeader = userRoles.isLeader;
-        const isAdmin = userRoles.isAdmin;
+        const isAuthor = userRoles.author && user.uid === (file.translatedBy || file.author);
+        const isLeader = userRoles.authorLeader;
+        const isAdmin = userRoles.admin;
 
 
         const canEdit = (isLeader || isAuthor) && !isAlreadyPublished && !isEarlyReleased;

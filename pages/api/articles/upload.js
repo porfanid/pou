@@ -29,7 +29,7 @@ async function handler(req, res) {
         return res.status(401).json({ error: 'Unauthorized: Unknown User' });
     }
 
-    if(!user.roles.isAuthor&&!user.roles.isAdmin){
+    if(!user.roles.isAuthor){
         return res.status(401).json({ error: 'Unauthorized: Not an Author' });
     }
 

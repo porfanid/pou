@@ -5,32 +5,42 @@ import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { useRouter } from "next/router";
 import { useAuth } from "../../context/AuthContext";
 
-const AdminSystem = ({ initialUsers, initialRoles }) => {
-    const { user } = useAuth();
+const AdminSystem = () => {
+    const { user, roles } = useAuth();
     const router = useRouter();
-    const [users, setUsers] = useState(initialUsers || {});
-    const [roles, setRoles] = useState(initialRoles || {});
+    const [users, setUsers] = useState({});
+    const [authUsers, setAuthUsers] = useState([]);
     const [newUserEmail, setNewUserEmail] = useState("");
-    const [role, setRole] = useState('admin');
+    const [roleType, setRoleType] = useState('admin');
     const [usernameInputs, setUsernameInputs] = useState({});
     const [popupMessage, setPopupMessage] = useState("");
     const [show, setShow] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    const roleMapping = { Author: "admin", Band: "band" };
+    const roleMapping = {
+        Author: "author",
+        Band: "band",
+        Admin: "admin",
+        ads:"ads",
+        "Author Leader": "authorLeader",
+        comments: "comments",
+        "Gallery Admin": "galleryAdmin",
+        Translator: "translationSystem"
+    };
 
     useEffect(() => {
         if (!user) return;
 
-        const isAdmin = user.email === "pavlos@orfanidis.net.gr" ||
-            (roles.admin && roles.admin.includes(user.email));
+        // Check if user is an admin
+        const isAdmin = roles && roles.admin;
 
         if (!isAdmin) {
             router.push("/upload");
             return;
         }
 
-        const usersRef = ref(database, "authors");
+        // Fetch authors data
+        const usersRef = ref(database, "users");
         const unsubscribeUsers = onValue(usersRef, async (snapshot) => {
             const usersData = snapshot.val() || {};
             const usersWithPhotos = { ...usersData };
@@ -47,23 +57,41 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
             );
 
             setUsers(usersWithPhotos);
-            setLoading(false);
         });
 
-        const rolesRef = ref(database, "roles");
-        const unsubscribeRoles = onValue(rolesRef, (snapshot) => {
-            const rolesData = snapshot.val() || {};
-            setRoles(rolesData);
-        });
+        // Fetch all users with their roles
+        fetchAllUsers();
 
         return () => {
             unsubscribeUsers();
-            unsubscribeRoles();
         };
-    }, [user, roles.admin, router]);
+    }, [user, roles, router]);
+
+    const fetchAllUsers = async () => {
+        try {
+            const response = await fetch('/api/admin/users', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.idToken}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch users');
+            }
+
+            const data = await response.json();
+            setAuthUsers(data.users);
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            setLoading(false);
+        }
+    };
 
     const toggleDisableUser = async (user) => {
-        const userRef = ref(database, `authors/${user.uid}`);
+        const userRef = ref(database, `users/${user.uid}`);
         const userSnapshot = await get(userRef);
         const userData = userSnapshot.val();
         userData.disabled = !userData.disabled;
@@ -73,7 +101,7 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
 
     const handleUsernameChange = (userId, newUsername) => {
         if (newUsername === users[userId]?.username) return;
-        const userRef = ref(database, `authors/${userId}`);
+        const userRef = ref(database, `users/${userId}`);
         update(userRef, { username: newUsername }).then(() => {
             setUsers(prevUsers => ({
                 ...prevUsers,
@@ -88,36 +116,62 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
     };
 
     const handleRoleChange = async (role, email, status) => {
-        console.log("Data:L ",role, email);
         try {
-            const response = await fetch('/api//author/admin', {
+            const response = await fetch('/api/author/admin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${user.idToken}`
                 },
-                body: JSON.stringify({ targetUid: email, roles: { role}, status }),
+                body: JSON.stringify({ targetUid: email, roles: { role }, status }),
             });
 
             if (!response.ok) {
                 throw new Error('Failed to update roles');
             }
 
-            const updatedRoles = { ...roles };
-            if (!updatedRoles[role]) updatedRoles[role] = [];
-            if (updatedRoles[role].includes(email)) {
-                updatedRoles[role] = updatedRoles[role].filter(userEmail => userEmail !== email);
-            } else {
-                updatedRoles[role].push(email);
-            }
-            setRoles(updatedRoles);
+            // Refresh the user list to get updated roles
+            fetchAllUsers();
         } catch (error) {
             console.error('Error updating roles:', error);
         }
     };
 
-    const getUserRoles = (email) => {
-        return Object.keys(roles).filter(role => roles[role]?.includes(email));
+    const addNewUser = async () => {
+        if (!newUserEmail || !roleType) {
+            alert("Please provide an email and select a role");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/author/admin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.idToken}`
+                },
+                body: JSON.stringify({
+                    targetUid: newUserEmail,
+                    roles: { role: roleType },
+                    status: true
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add user role');
+            }
+
+            setNewUserEmail("");
+            alert(`User ${newUserEmail} has been assigned the ${roleType} role successfully!`);
+            fetchAllUsers();
+        } catch (error) {
+            console.error('Error adding user role:', error);
+            alert(`Error adding user: ${error.message}`);
+        }
+    };
+
+    const hasRole = (userClaims, role) => {
+        return userClaims&&userClaims.roles && userClaims.roles[role] === true;
     };
 
     if (loading) {
@@ -128,7 +182,7 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
         );
     }
 
-    if (!user || (user.email !== "pavlos@orfanidis.net.gr" && (!roles.admin || !roles.admin.includes(user.email)))) {
+    if (!user || !roles || !roles.admin) {
         return (
             <div className="container mx-auto mt-10 p-6 bg-red-100 rounded-lg">
                 <h1 className="text-2xl font-bold text-red-800 mb-4">Access Denied</h1>
@@ -144,7 +198,7 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
 
             <div className="flex flex-wrap justify-center mb-6">
                 <div className="w-full md:w-1/4 mb-4">
-                    Test
+                    <h3 className="text-xl font-semibold text-white">Add New User</h3>
                 </div>
                 <div className="flex flex-wrap justify-center w-full md:w-3/4">
                     <div className="w-full md:w-2/5 mb-4">
@@ -153,14 +207,14 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
                             className="w-full p-2 bg-gray-800 text-white rounded focus:outline-none"
                             value={newUserEmail}
                             onChange={(e) => setNewUserEmail(e.target.value)}
-                            placeholder="Enter new author email"
+                            placeholder="Enter user email"
                         />
                     </div>
                     <div className="w-1/3 md:w-1/6 mb-4">
                         <select
                             className="w-full p-2 bg-gray-800 text-white rounded"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
+                            value={roleType}
+                            onChange={(e) => setRoleType(e.target.value)}
                         >
                             {Object.keys(roleMapping).map((roleName) => (
                                 <option key={roleName} value={roleMapping[roleName]}>
@@ -172,17 +226,9 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
                     <div className="w-full md:w-1/5 mb-4">
                         <button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
-                            onClick={async () => {
-                                try {
-                                    const claims = { [roleMapping[role]]: true };
-                                    const result = await setClaims(newUserEmail, true, claims);
-                                    alert(result.data.message);
-                                } catch (e) {
-                                    alert(e.message);
-                                }
-                            }}
+                            onClick={addNewUser}
                         >
-                            Set Role
+                            Add User
                         </button>
                     </div>
                 </div>
@@ -191,66 +237,83 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
             <hr className="border-gray-700 mb-6" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users && Object.keys(users).map((key) => {
-                    const user = users[key];
-                    const email = user.email;
-                    const userRoles = getUserRoles(email);
+                {authUsers.map((authUser) => {
+                    const userProfile = users[authUser.uid] || {};
+                    const userClaims = authUser.customClaims || {};
 
                     return (
-                        <div key={key} className="bg-gray-800 rounded-lg shadow p-6 flex flex-col items-center">
-                            {user.photoURL && (
+                        <div key={authUser.uid} className="bg-gray-800 rounded-lg shadow p-6 flex flex-col items-center">
+                            {userProfile.photoURL && (
                                 <img
-                                    src={user.photoURL}
-                                    alt={user.displayName}
+                                    src={userProfile.photoURL}
+                                    alt={authUser.displayName || authUser.email}
                                     className="w-32 h-32 rounded-full object-cover mb-4"
                                 />
                             )}
-                            <h3 className="text-xl font-bold text-white mb-2">{user.displayName}</h3>
-                            <p className="text-sm text-gray-400 mb-2">{email}</p>
-                            <p className="text-xs bg-gray-700 text-white rounded px-2 py-1 mb-4">
-                                {userRoles.length > 0 ? userRoles.join(", ") : "Author"}
-                            </p>
+                            <h3 className="text-xl font-bold text-white mb-2">
+                                {authUser.displayName || userProfile.username || "No Name"}
+                            </h3>
+                            <p className="text-sm text-gray-400 mb-2">{authUser.email}</p>
+                            <div className="flex flex-wrap gap-1 mb-4">
+                                {Object.keys(roleMapping).map((roleName) => (
+                                    hasRole(userClaims, roleMapping[roleName]) && (
+                                        <span key={roleName} className="text-xs bg-gray-700 text-white rounded px-2 py-1">
+                                            {roleName}
+                                        </span>
+                                    )
+                                ))}
+                            </div>
 
-                            <input
-                                type="text"
-                                className="w-full mb-2 p-2 bg-gray-700 text-white rounded focus:outline-none"
-                                value={usernameInputs[key] || user.username}
-                                onChange={(e) => handleUsernameInputChange(key, e.target.value)}
-                                placeholder="Change username"
-                            />
+                            {userProfile.username !== undefined && (
+                                <>
+                                    <input
+                                        type="text"
+                                        className="w-full mb-2 p-2 bg-gray-700 text-white rounded focus:outline-none"
+                                        value={usernameInputs[authUser.uid] || userProfile.username || ""}
+                                        onChange={(e) => handleUsernameInputChange(authUser.uid, e.target.value)}
+                                        placeholder="Change username"
+                                    />
 
-                            <button
-                                onClick={() => handleUsernameChange(key, usernameInputs[key] || user.username)}
-                                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-1 px-4 rounded mb-2"
-                            >
-                                Change Username
-                            </button>
+                                    <button
+                                        onClick={() => handleUsernameChange(authUser.uid, usernameInputs[authUser.uid] || userProfile.username)}
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-1 px-4 rounded mb-2"
+                                    >
+                                        Change Username
+                                    </button>
+                                </>
+                            )}
 
                             <div className="flex flex-wrap gap-2 justify-center mt-4 w-full">
-                                {Object.keys(roles).map((roleName) => (
+                                {Object.keys(roleMapping).map((roleName) => (
                                     <button
                                         key={roleName}
-                                        onClick={() => handleRoleChange(roleName, email, !userRoles.includes(roleName))}
+                                        onClick={() => handleRoleChange(
+                                            roleMapping[roleName],
+                                            authUser.email,
+                                            !hasRole(userClaims, roleMapping[roleName])
+                                        )}
                                         className={`px-3 py-1 rounded text-sm w-full
-                            ${userRoles.includes(roleName)
+                                            ${hasRole(userClaims, roleMapping[roleName])
                                             ? "bg-blue-600 hover:bg-blue-700 text-white"
                                             : "bg-gray-300 hover:bg-gray-400 text-gray-800"}`}
                                     >
-                                        {userRoles.includes(roleName)
+                                        {hasRole(userClaims, roleMapping[roleName])
                                             ? `Remove ${roleName}`
                                             : `Add ${roleName}`}
                                     </button>
                                 ))}
 
-                                <button
-                                    onClick={() => toggleDisableUser(user)}
-                                    className={`px-3 py-1 rounded text-sm w-full
-                        ${user.disabled
-                                        ? "bg-yellow-600 hover:bg-yellow-700 text-white"
-                                        : "bg-yellow-200 hover:bg-yellow-300 text-yellow-800"}`}
-                                >
-                                    {user.disabled ? "Enable User" : "Disable User"}
-                                </button>
+                                {userProfile.disabled !== undefined && (
+                                    <button
+                                        onClick={() => toggleDisableUser({...authUser, ...userProfile})}
+                                        className={`px-3 py-1 rounded text-sm w-full
+                                            ${userProfile.disabled
+                                            ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                                            : "bg-yellow-200 hover:bg-yellow-300 text-yellow-800"}`}
+                                    >
+                                        {userProfile.disabled ? "Enable User" : "Disable User"}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     );
@@ -269,9 +332,7 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
                                 Cancel
                             </button>
                             <button
-                                onClick={() => {
-                                    functionToRun(functionArguments).then(() => setShow(false)).catch((e) => alert(e.message));
-                                }}
+                                onClick={() => setShow(false)}
                                 className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded"
                             >
                                 Confirm
@@ -286,35 +347,4 @@ const AdminSystem = ({ initialUsers, initialRoles }) => {
 
 export default AdminSystem;
 
-// Add getServerSideProps to fetch initial data
-export async function getServerSideProps(context) {
-    try {
-        const admin = require('../../firebase/adminConfig');
-
-        // User is authenticated and an admin, fetch data
-        const adminDb = await admin.database();
-
-        // Get users data
-        const usersSnapshot = await adminDb.ref('users').once('value');
-        const usersData = usersSnapshot.val() || {};
-
-        // Get roles data
-        const rolesSnapshot = await adminDb.ref('roles').once('value');
-        const rolesData = rolesSnapshot.val() || {};
-
-        console.log("rolesData: ", rolesData);
-
-        console.log("Nepheli");
-
-        // Return the data as props
-        return {
-            props: {
-                initialUsers: usersData,
-                initialRoles: rolesData
-            }
-        };
-    } catch (error) {
-        console.error("Error in getServerSideProps:", error);
-        return { props: { initialUsers: null, initialRoles: null } };
-    }
-}
+// Remove the getServerSideProps since we're now fetching data on the client side

@@ -1,9 +1,7 @@
-// pages/api/updateUserRoles.js
+// pages/api/author/admin.js
 import * as admin from '../../../firebase/adminConfig';
-import {withMiddleware} from "../../../utils/withMiddleware";
-import {verifyIdToken} from "../../../middleware/auth";
-
-// Initialize Firebase Admin if not already initialized
+import { withMiddleware } from "../../../utils/withMiddleware";
+import { verifyIdToken } from "../../../middleware/auth";
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -11,24 +9,22 @@ async function handler(req, res) {
     }
 
     try {
-        // Get the Bearer token from the Authorization header
         const auth = await admin.auth();
-        const database = await admin.database();
 
         const user = req.user;
 
-        if(!user||!user.roles){
+        if (!user || !user.roles) {
             return res.status(401).json({ error: 'Unauthorized: Unknown User' });
         }
 
-        if(!user.roles.isAdmin){
+        if (!user.roles.isAdmin) {
             return res.status(403).json({ error: 'Forbidden - Admin access required' });
         }
 
         const { targetUid, roles, status } = req.body;
 
         if (!targetUid) {
-            return res.status(400).json({ error: 'Target user ID is required' });
+            return res.status(400).json({ error: 'Target user email is required' });
         }
 
         if (!roles) {
@@ -36,36 +32,33 @@ async function handler(req, res) {
         }
 
         const role = roles.role;
-        const targetEmail = targetUid;
 
-        const currentRoles = (await database.ref(`roles/${role}`).once('value')).val();
+        try {
+            // Get user by email
+            const userRecord = await auth.getUserByEmail(targetUid);
 
-        if(!status){
-            if (!currentRoles) {
-                return res.status(400).json({ error: 'Role does not exist' });
+            // Get current custom claims
+            const customClaims = userRecord.customClaims || {};
+
+            // Update the specific role
+            if(!customClaims.roles){
+                customClaims.roles = {};
             }
-            const newRoles = currentRoles.filter((email) => email !== targetEmail);
-            await database.ref(`roles/${role}`).set(newRoles);
-            return res.status(200).json({ success: true });
+            customClaims.roles[role] = status;
+
+            // Set the updated custom claims
+            await auth.setCustomUserClaims(userRecord.uid, customClaims);
+
+            return res.status(200).json({
+                success: true,
+                message: `User ${targetUid} role ${role} updated successfully`
+            });
+        } catch (error) {
+            if (error.code === 'auth/user-not-found') {
+                return res.status(404).json({ error: 'User not found' });
+            }
+            throw error;
         }
-
-        let newRoles;
-        if (!currentRoles) {
-            newRoles=[targetEmail];
-        }else{
-            newRoles = [...currentRoles, targetEmail];
-        }
-
-        await database.ref(`roles/${role}`).set(newRoles);
-
-
-        // Update custom claims for the target user
-        const targetUser = auth.getUserByEmail(targetUid);
-        //await auth.setCustomUserClaims(targetUser, { roles });
-
-        console.log("roles", role);
-
-        return res.status(200).json({ success: true });
     } catch (error) {
         console.error('Error updating user roles:', error);
         return res.status(500).json({ error: 'Internal server error', message: error.message });

@@ -11,7 +11,7 @@ const CommentSystem = ({ articleName }) => {
     const [editedComment, setEditedComment] = useState('');
 
     const { user, roles } = useAuth();
-    const isAdmin = roles && roles.isCommentAdmin;
+    const isAdmin = roles && roles.comments;
 
     useEffect(() => {
         const commentsRef = ref(database, `comments/${articleName}`);

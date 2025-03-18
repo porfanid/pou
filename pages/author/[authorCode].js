@@ -61,7 +61,7 @@ const AuthorPage = ({ author }) => {
                 <h2 className="text-3xl font-bold text-red-500 text-center mb-5 uppercase tracking-widest">
                     ⚡ Articles by {author.displayName}
                 </h2>
-                <AccordionComponent articles={author.writtenArticles.articles} />
+                <AccordionComponent articles={(author.writtenArticles)?author.writtenArticles.articles:{}} />
             </div>
         </div>
     );

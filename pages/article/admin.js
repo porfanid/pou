@@ -35,7 +35,7 @@ const AdminPublishSystem = () => {
 
     useEffect(() => {
         setLoading(true);
-        if (!roles || !roles.isAdmin) {
+        if (!roles || !roles.author) {
             setError("You are not authorized to view this page");
             setLoading(false);
             return;

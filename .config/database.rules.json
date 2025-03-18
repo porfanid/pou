@@ -24,25 +24,11 @@
         ".write": "auth != null && (auth.uid === $uid)"
       }
     },
-    "bands": {
-      "$bandId": {
-        "displayName": {
-          ".read": true
-        },
-        "photoURL": {
-          ".read": true
-        },
-        ".read": "auth != null && (auth.uid === $bandId || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())",
-        ".write": "auth != null && (auth.uid === $bandId || root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists())"
-      }
-    },
-    "roles": {
-      ".read": "auth != null",
-      ".write": "auth != null && root.child('roles/admins').child(auth.token.email.replace('.', ',')).exists()"
-    },
     "comments": {
       ".read": true,
-      ".write": "auth != null"
+      "$commentId": {
+        ".write": "auth != null && (!data.exists() || auth.uid === data.child('user').val() || auth.token.roles.comments === true)"
+      }
     },
     ".read": false,
     ".write": false
