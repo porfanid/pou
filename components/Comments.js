@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { get, onValue, push, ref, remove, set, update } from 'firebase/database';
+import {onValue, push, ref, remove, set, update } from 'firebase/database';
 import { database } from '../firebase/config';
 import { CommentAuthor } from './CommentAuthor';
 import { useAuth } from '../context/AuthContext';

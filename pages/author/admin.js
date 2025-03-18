@@ -60,7 +60,7 @@ const AdminSystem = () => {
         });
 
         // Fetch all users with their roles
-        fetchAllUsers();
+        fetchAllUsers().then();
 
         return () => {
             unsubscribeUsers();

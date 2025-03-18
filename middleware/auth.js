@@ -23,7 +23,6 @@ export const verifyIdToken = async (req, res, next) => {
 
         const rolesRef = database.ref("roles");
         const rolesSnapshot = await rolesRef.once('value');
-        const rolesData = rolesSnapshot.val() || {};
 
 
         const userRoles = {}
