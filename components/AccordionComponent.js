@@ -19,11 +19,11 @@ export function AccordionComponent({ articles }) {
                 return (
                     <div className="w-full p-3" key={index}>
                         <div className="bg-gray-900 border border-red-700 shadow-lg shadow-red-900 rounded-xl p-5 transition duration-300 hover:scale-105">
-                            {article.image ? (
+                            {article.image||article.img01 ? (
                                 <Image
                                     width={800}
                                     height={500}
-                                    src={article.image}
+                                    src={(article.image||article.img01).replace("https://heavy-local.com/", "https://pulse-of-the-underground.com/")}
                                     alt={article.title}
                                     className="w-full h-48 object-cover rounded-md mb-3 border border-red-800 shadow-md shadow-red-900"
                                 />
