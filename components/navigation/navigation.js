@@ -49,6 +49,10 @@ const AppNavigation = () => {
                         Home
                     </Link>
 
+                    <Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/gigs">
+                        Gigs
+                    </Link>
+
                     {/* Articles Dropdown with Improved Hover Behavior */}
                     <div
                         className="relative"
