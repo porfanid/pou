@@ -25,7 +25,7 @@ const AdminSystem = () => {
         "Author Leader": "authorLeader",
         comments: "comments",
         "Gallery Admin": "galleryAdmin",
-        Translator: "translationSystem"
+        Translator: "translationSystem",
         "Gigs": "gigs",
     };
 

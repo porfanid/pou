@@ -11,9 +11,8 @@ export default function GigsPage() {
     const { roles } = useAuth();
 
     useEffect(() => {
-        setIsAdmin(roles&&roles.gigs);
+        setIsAdmin(roles && roles.gigs);
 
-        // Fetch gigs data
         const fetchGigs = async () => {
             try {
                 const response = await fetch('/api/gigs');
@@ -31,49 +30,58 @@ export default function GigsPage() {
             }
         };
 
-        fetchGigs().then();
+        fetchGigs();
     }, [roles]);
 
     return (
-        <div className={"mt-lg-5"}>
+        <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12 px-4">
             {admin && (
-                <section className="container flex justify-center">
+                <section className="container mx-auto mb-12 flex justify-center">
                     <UploadGig />
                 </section>
             )}
             <section className="gigs">
                 <div className="container mx-auto px-4">
-                    <h1 className="text-center mb-10 text-white text-3xl font-bold">Gigs</h1>
+                    <h1 className="text-center mb-10 text-red-600 text-4xl md:text-5xl font-black uppercase tracking-widest drop-shadow-lg">
+                        Gigs
+                    </h1>
+
                     {loading ? (
                         <div className="flex justify-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+                            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-red-600 border-opacity-50"></div>
                         </div>
+                    ) : gigs.length === 0 ? (
+                        <div className="text-center text-gray-400 text-lg">No gigs found. Stay tuned!</div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             {gigs.map((gig) => (
-                                <div key={gig.date} className="group">
-                                    <div className="relative h-full bg-white rounded-lg overflow-hidden">
-                                        <div className="">
-                                            <div className="relative w-full h-64">
-                                                <Image
-                                                    src={gig.thumbnailURL[0] || '/placeholder.jpg'}
-                                                    alt={gig.title}
-                                                    width={500}
-                                                    height={300}
-                                                    objectFit="cover"
-                                                    className="border-5 border-white rounded-lg"
-                                                />
-                                            </div>
-                                            <div className="p-4 text-center">
-                                                <h5 className="text-lg font-semibold">{gig.title}</h5>
-                                            </div>
-                                            <div className="p-4 text-center">
-                                                <p className="text-gray-700 mb-4">{gig.description}</p>
-                                                <Link className="px-4 py-2 bg-indigo-900 text-white rounded hover:bg-indigo-800 transition-colors" href={`/gigs/${gig.date}`}>
-                                                    View Gig
-                                                </Link>
-                                            </div>
-                                        </div>
+                                <div
+                                    key={gig.date}
+                                    className="relative group bg-gray-800 border-2 border-gray-700 rounded-lg overflow-hidden shadow-lg hover:shadow-red-600/50 transition duration-300 ease-in-out transform hover:scale-105"
+                                >
+                                    <div className="relative w-full h-64 overflow-hidden">
+                                        <Image
+                                            src={gig.thumbnailURL[0] || '/placeholder.jpg'}
+                                            alt={gig.title}
+                                            width={500}
+                                            height={300}
+                                            className="object-cover w-full h-full group-hover:opacity-90 transition duration-300"
+                                        />
+                                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black via-transparent to-transparent opacity-70 group-hover:opacity-50"></div>
+                                    </div>
+
+                                    <div className="p-6 text-center">
+                                        <h5 className="text-xl font-bold text-white uppercase tracking-wide mb-2">
+                                            {gig.title}
+                                        </h5>
+                                        <p className="text-gray-300 text-sm mb-4 line-clamp-3">{gig.description}</p>
+
+                                        <Link
+                                            href={`/gigs/${gig.date}`}
+                                            className="inline-block px-6 py-2 border-2 border-red-600 text-red-600 font-semibold uppercase text-xs tracking-widest rounded hover:bg-red-600 hover:text-white transition-all duration-300"
+                                        >
+                                            View Gig
+                                        </Link>
                                     </div>
                                 </div>
                             ))}
