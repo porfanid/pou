@@ -3,7 +3,11 @@ import { ref, get, remove } from 'firebase/database';
 import {withMiddleware} from "../../../utils/withMiddleware";
 import {verifyIdToken} from "../../../middleware/auth";
 
-async function handler(req, res) {
+async function deleteHandler(){
+
+}
+
+async function handler(req, res, isDeleteAllowed) {
     if (req.method !== 'GET'&&req.method !== 'DELETE') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
@@ -16,6 +20,9 @@ async function handler(req, res) {
     const gigRef = ref(database, `gigs/${date}`);
 
     if(req.method === 'DELETE') {
+        if(!isDeleteAllowed){
+            return res.status(405).json({ message: 'Method not allowed' });
+        }
         const user = req.user;
         if (!user || !user.roles) {
             console.log("Roles:",user.roles)
@@ -23,7 +30,7 @@ async function handler(req, res) {
         }
         if(!user.roles.isGigAdmin) {
             return res.status(403).json({ error: 'Forbidden - Gig admin access required' });
-        }``
+        }
         const [listResult] = await bucket.getFiles({ prefix: `gigs/${date}` });
         const deletePromises = listResult.map(async (itemRef) => {
             try {
@@ -84,15 +91,22 @@ async function handler(req, res) {
     }
 }
 
+// File: pages/api/events/[date].js
+
 export default async function wrappedHandler(req, res) {
     try {
         // Run the middleware first
         await withMiddleware(verifyIdToken)(req, res);
 
+        // Check for authentication error
+        if (req.authError) {
+            return await handler(req, res, false);
+        }
+
         // Then run your actual handler
-        return await handler(req, res);
+        return await handler(req, res, true);
     } catch (error) {
-        console.error(error);
-        return res.status(401).json({ error: 'Unauthorized' });
+        console.log(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 }

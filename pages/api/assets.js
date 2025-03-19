@@ -19,7 +19,9 @@ export default async function handler(req, res) {
     }
 
     let filePath = `images/${imagePath}`;
+    console.log("The file path is: ", filePath);
     const file = bucket.file(filePath);
+    console.log("The file is: ", (await file.exists()));
 
     try {
         // Get file metadata
@@ -27,6 +29,7 @@ export default async function handler(req, res) {
 
         if (!metadata.metadata?.width) {
             // Download file buffer and calculate dimensions
+            console.log("Downloading data");
             const [fileBuffer] = await file.download();
             const dimensions = await getImageDimensionsBuffer(fileBuffer);
 

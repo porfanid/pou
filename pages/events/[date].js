@@ -15,7 +15,7 @@ export default function GigDetailPage() {
 
         const fetchGigDetails = async () => {
             try {
-                const response = await fetch(`/api/gigs/${date}`);
+                const response = await fetch(`/api/events/${date}`);
                 const data = await response.json();
                 if (data.gig) {
                     setGig(data.gig);
@@ -51,8 +51,8 @@ export default function GigDetailPage() {
             />
             <div className="flex justify-center mt-6 mb-6">
                 <Link className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                      href="/gigs">
-                    Back to All Gigs
+                      href="/events">
+                    Back to All Events
                 </Link>
             </div>
         </div>

@@ -17,6 +17,9 @@
         "displayName": {
           ".read": true
         },
+        "wantToShow": {
+            ".read": true
+        },
         "photoURL": {
           ".read": true
         },
@@ -33,7 +36,17 @@
     "reported_comments": {
       ".read": "auth != null && auth.token.roles.comments === true",
       "$commentId": {
-        ".write": "auth != null && (!data.exists() || auth.token.roles.comments === true)"
+        ".write": "auth != null && (!data.exists() || auth.token.roles.comments === true)",
+      }
+    },
+    "gallery": {
+      "uploaded": {
+        ".read": true,
+        ".write": "auth != null && auth.token.roles.galleryAdmin === true"
+      },
+      "review": {
+        ".read": "auth != null && auth.token.roles.galleryAdmin === true",
+        ".write": "auth != null"
       }
     },
     ".read": false,
