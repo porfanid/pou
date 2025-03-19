@@ -15,7 +15,7 @@ export default function GigsPage() {
 
         const fetchGigs = async () => {
             try {
-                const response = await fetch('/api/gigs');
+                const response = await fetch('/api/events');
                 const data = await response.json();
 
                 console.log("Gigs: ", data.gigs);
@@ -25,7 +25,7 @@ export default function GigsPage() {
                 }
                 setLoading(false);
             } catch (error) {
-                console.error("Error fetching gigs:", error);
+                console.error("Error fetching events:", error);
                 setLoading(false);
             }
         };
@@ -40,7 +40,7 @@ export default function GigsPage() {
                 return;
             }
             try {
-                const response = await fetch(`/api/gigs/${date}`, {
+                const response = await fetch(`/api/events/${date}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${user.idToken}`, // Replace `user.token` with the actual token
@@ -68,7 +68,7 @@ export default function GigsPage() {
             <section className="gigs">
                 <div className="container mx-auto px-4">
                     <h1 className="text-center mb-10 text-red-600 text-4xl md:text-5xl font-black uppercase tracking-widest drop-shadow-lg">
-                        Gigs
+                        Past Events
                     </h1>
 
                     {loading ? (
@@ -102,7 +102,7 @@ export default function GigsPage() {
                                         <p className="text-gray-300 text-sm mb-4 line-clamp-3">{gig.description}</p>
 
                                         <Link
-                                            href={`/gigs/${gig.date}`}
+                                            href={`/events/${gig.date}`}
                                             className="inline-block px-6 py-2 border-2 border-red-600 text-red-600 font-semibold uppercase text-xs tracking-widest rounded hover:bg-red-600 hover:text-white transition-all duration-300"
                                         >
                                             View Gig

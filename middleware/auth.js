@@ -6,13 +6,15 @@ export const verifyIdToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        req.authError = 'Unauthorized';
+        return next();
     }
 
     const idToken = authHeader.split('Bearer ')[1];
 
     if (!idToken) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        req.authError = 'Unauthorized';
+        return next();
     }
 
     try {
@@ -24,9 +26,8 @@ export const verifyIdToken = async (req, res, next) => {
         const rolesRef = database.ref("roles");
         const rolesSnapshot = await rolesRef.once('value');
 
-
-        const userRoles = {}
-        if(user.customClaims&& user.customClaims.roles){
+        const userRoles = {};
+        if (user.customClaims && user.customClaims.roles) {
             userRoles.isBand = !!user.customClaims.roles.band;
             userRoles.isAuthor = !!user.customClaims.roles.author;
             userRoles.isAdmin = !!user.customClaims.roles.admin;
@@ -37,10 +38,11 @@ export const verifyIdToken = async (req, res, next) => {
             userRoles.isGigAdmin = !!user.customClaims.roles.gigs;
             userRoles.isGalleryAdmin = !!user.customClaims.roles.galleryAdmin;
         }
-        req.user = {user, roles: userRoles};
+        req.user = { user, roles: userRoles };
         next();
     } catch (error) {
-        console.error('Error verifying ID token:', error);
-        return res.status(401).json({ error: 'Unauthorized' });
+        console.error('Error verifying token:', error);
+        req.authError = 'Unauthorized';
+        next();
     }
 };
