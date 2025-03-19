@@ -177,66 +177,6 @@ export default function ArtGallery() {
                         </Link>
                     </div>
 
-                    {galleryItems.length === 0 ? (
-                        <div className="text-center py-12">
-                            <p className="text-2xl text-gray-400 mb-4">No artwork yet</p>
-                            <p className="text-lg text-gray-500">Be the first to upload your metal-inspired art!</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {galleryItems.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-red-600 transition-all duration-300 shadow-lg hover:shadow-red-900/30"
-                                    style={{
-                                        animationDelay: `${index * 0.1}s`,
-                                        animation: 'fadeIn 0.5s ease-in-out forwards'
-                                    }}
-                                >
-                                    <Link href={`${item.image}?fullScale=true`} className="block relative h-64 overflow-hidden">
-                                        <Image
-                                            src={item.image}
-                                            alt={item.descriptionEng}
-                                            className="object-cover object-center w-full h-full transition-transform duration-500 hover:scale-110"
-                                            width={400}
-                                            height={300}
-                                            unoptimized={true}
-                                        />
-                                    </Link>
-                                    <div className="p-4">
-                                        <div className="flex items-center mb-3">
-                                            {item.wantToShow && (
-                                                <div className="mr-3 relative w-12 h-12 border-2 border-red-500 rounded-full overflow-hidden">
-                                                    <Image
-                                                        src={item.userImage}
-                                                        alt={item.title}
-                                                        className="rounded-full object-cover w-full h-full"
-                                                        width={50}
-                                                        height={50}
-                                                        unoptimized={true}
-                                                    />
-                                                </div>
-                                            )}
-                                            {item.id ? (
-                                                <Link href={`/author/${item.username}`} className="text-lg font-bold text-red-400 hover:text-red-300">
-                                                    {item.title}
-                                                </Link>
-                                            ) : (
-                                                <span className="text-lg font-bold text-gray-300">{item.title}</span>
-                                            )}
-                                        </div>
-                                        {item.descriptionEl && (
-                                            <p className="text-gray-400 mb-2 italic">{item.descriptionEl}</p>
-                                        )}
-                                        {item.descriptionEng && (
-                                            <p className="text-gray-300">{item.descriptionEng}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
                     {isGalleryAdmin && (
                         <div className="mt-20 mb-10">
                             <h3 className="text-4xl font-bold text-red-600 mb-6">
@@ -309,6 +249,66 @@ export default function ArtGallery() {
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {galleryItems.length === 0 ? (
+                        <div className="text-center py-12">
+                            <p className="text-2xl text-gray-400 mb-4">No artwork yet</p>
+                            <p className="text-lg text-gray-500">Be the first to upload your metal-inspired art!</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {galleryItems.map((item, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-red-600 transition-all duration-300 shadow-lg hover:shadow-red-900/30"
+                                    style={{
+                                        animationDelay: `${index * 0.1}s`,
+                                        animation: 'fadeIn 0.5s ease-in-out forwards'
+                                    }}
+                                >
+                                    <Link href={`${item.image}?fullScale=true`} className="block relative h-64 overflow-hidden">
+                                        <Image
+                                            src={item.image}
+                                            alt={item.descriptionEng}
+                                            className="object-cover object-center w-full h-full transition-transform duration-500 hover:scale-110"
+                                            width={400}
+                                            height={300}
+                                            unoptimized={true}
+                                        />
+                                    </Link>
+                                    <div className="p-4">
+                                        <div className="flex items-center mb-3">
+                                            {item.wantToShow && (
+                                                <div className="mr-3 relative w-12 h-12 border-2 border-red-500 rounded-full overflow-hidden">
+                                                    <Image
+                                                        src={item.userImage}
+                                                        alt={item.title}
+                                                        className="rounded-full object-cover w-full h-full"
+                                                        width={50}
+                                                        height={50}
+                                                        unoptimized={true}
+                                                    />
+                                                </div>
+                                            )}
+                                            {item.id ? (
+                                                <Link href={`/author/${item.username}`} className="text-lg font-bold text-red-400 hover:text-red-300">
+                                                    {item.title}
+                                                </Link>
+                                            ) : (
+                                                <span className="text-lg font-bold text-gray-300">{item.title}</span>
+                                            )}
+                                        </div>
+                                        {item.descriptionEl && (
+                                            <p className="text-gray-400 mb-2 italic">{item.descriptionEl}</p>
+                                        )}
+                                        {item.descriptionEng && (
+                                            <p className="text-gray-300">{item.descriptionEng}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
