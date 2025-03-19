@@ -1,18 +1,18 @@
-import React, {useState, useCallback, useEffect} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import axios from "axios";
-import { useDropzone } from "react-dropzone";
+import {useDropzone} from "react-dropzone";
 import DraftEditor, {exportOptions} from "../../components/editor/editor";
-import { EditorState} from "draft-js";
+import {EditorState} from "draft-js";
 import Select from "react-select";
 import {useAuth} from "../../context/AuthContext";
 import {config} from "../../firebase/config";
-import { getValue } from "firebase/remote-config";
+import {getValue} from "firebase/remote-config";
 import slugify from 'slugify';
 import {stateToHTML} from "draft-js-export-html"; // You'll need to install slugify package
 import Head from "next/head"
 
 const ArticleUpload = () => {
-    const { user,roles } = useAuth();
+    const {user, roles} = useAuth();
 
     const [title, setTitle] = useState("");
     const [details, setDetails] = useState("");
@@ -42,15 +42,15 @@ const ArticleUpload = () => {
             strict: true,     // strip special characters
             trim: true        // trim leading and trailing replacement chars
         });
-        if(!hasBeenEdited) {
+        if (!hasBeenEdited) {
             setSlug(generatedSlug);
         }
     }, [title]);
 
     useEffect(() => {
-        if(!roles) return;
-        if(!roles.isAuthor&&!roles.author){
-            setMessage({ type: "error", text: "You are not authorized to upload articles." });
+        if (!roles) return;
+        if (!roles.isAuthor && !roles.author) {
+            setMessage({type: "error", text: "You are not authorized to upload articles."});
             return;
         }
         setCanUpload(true);
@@ -80,27 +80,27 @@ const ArticleUpload = () => {
         }
     }, []);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    const {getRootProps, getInputProps, isDragActive} = useDropzone({
         onDrop,
         accept: "image/*",
         maxFiles: 1,
     });
 
     const handleSocialChange = (e) => {
-        setSocials({ ...socials, [e.target.name]: e.target.value });
+        setSocials({...socials, [e.target.name]: e.target.value});
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if(!canUpload) {
-            setMessage({ type: "error", text: "You are not authorized to upload articles." });
+        if (!canUpload) {
+            setMessage({type: "error", text: "You are not authorized to upload articles."});
             return;
         }
         setLoading(true);
         setMessage(null);
 
         if (!image) {
-            setMessage({ type: "error", text: "Please upload an image." });
+            setMessage({type: "error", text: "Please upload an image."});
             setLoading(false);
             return;
         }
@@ -126,22 +126,25 @@ const ArticleUpload = () => {
                     'Authorization': `Bearer ${user.idToken}`
                 },
             });
-            setMessage({ type: "success", text: response.data.message });
+            setMessage({type: "success", text: response.data.message});
         } catch (error) {
-            setMessage({ type: "error", text: error.response?.data?.error || "Failed to upload articles" });
+            setMessage({type: "error", text: error.response?.data?.error || "Failed to upload articles"});
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="max-w-3xl mx-auto p-6 sm:p-8 bg-gray-950 text-white rounded-2xl shadow-2xl border border-red-700 mt-10 w-full">
+        <div
+            className="max-w-3xl mx-auto p-6 sm:p-8 bg-gray-950 text-white rounded-2xl shadow-2xl border border-red-700 mt-10 w-full">
             <Head>
                 <title>Upload article</title>
             </Head>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-red-600 mb-6 uppercase tracking-widest text-center">Upload Your Metal Article</h2>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-red-600 mb-6 uppercase tracking-widest text-center">Upload
+                Your Metal Article</h2>
             {message && (
-                <div className={`p-4 rounded-lg text-center font-bold ${message.type === "success" ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"}`}>
+                <div
+                    className={`p-4 rounded-lg text-center font-bold ${message.type === "success" ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"}`}>
                     {message.text}
                 </div>
             )}
@@ -160,24 +163,24 @@ const ArticleUpload = () => {
                 {/* Updated slug display to be on one line */}
                 <div className="mt-1 text-sm text-gray-400 min-w-fit truncate">
                     <span className="font-medium">Link: </span>
-                    <span className="inline-flex items-center">
-                        https://pulse-of-the-underground.com/article/{' '}
-                        <input
-                            type="text"
-                            value={slug}
-                            onChange={(e) => {
-                                setSlug(e.target.value);
-                                setHasBeenEdited(true);
-                            }}
-                            className="bg-transparent border border-1 border-red-500 text-gray-400 focus:outline-none focus:ring-0 w-auto ml-1"
-                        />
-                    </span>
+                    <span className="inline-flex items-center flex-wrap">
+        https://pulse-of-the-underground.com/article/
+        <input
+            type="text"
+            value={slug}
+            onChange={(e) => {
+                setSlug(e.target.value);
+                setHasBeenEdited(true);
+            }}
+            className="bg-transparent border border-1 border-red-500 text-gray-400 focus:outline-none focus:ring-0 w-full sm:w-auto ml-1"
+        />
+    </span>
                 </div>
 
 
                 <div>
                     <label className="block text-lg font-semibold text-red-400">Content</label>
-                    <DraftEditor setEditorState={setEditorState} editorState={editorState} />
+                    <DraftEditor setEditorState={setEditorState} editorState={editorState}/>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -278,15 +281,17 @@ const ArticleUpload = () => {
                     </div>
                 </div>
 
-                <div {...getRootProps()} className={`mt-4 p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition ${isDragActive ? "border-red-500 bg-red-800" : "border-red-600 bg-gray-900"}`}>
+                <div {...getRootProps()}
+                     className={`mt-4 p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition ${isDragActive ? "border-red-500 bg-red-800" : "border-red-600 bg-gray-900"}`}>
                     <input {...getInputProps()} />
                     {image ? (
                         <div className="flex flex-col items-center">
-                            <img src={URL.createObjectURL(image)} alt="Preview" className="h-24 w-auto rounded-lg" />
+                            <img src={URL.createObjectURL(image)} alt="Preview" className="h-24 w-auto rounded-lg"/>
                             <p className="mt-2 text-red-300 font-semibold">{image.name}</p>
                         </div>
                     ) : (
-                        <p className="text-red-400 text-lg">Drag & Drop an image or <span className="text-red-500 underline">Click to Browse</span></p>
+                        <p className="text-red-400 text-lg">Drag & Drop an image or <span
+                            className="text-red-500 underline">Click to Browse</span></p>
                     )}
                 </div>
 

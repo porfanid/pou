@@ -49,6 +49,10 @@ const AppNavigation = () => {
                         Home
                     </Link>
 
+                    <Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/events">
+                        Events
+                    </Link>
+
                     {/* Articles Dropdown with Improved Hover Behavior */}
                     <div
                         className="relative"
@@ -85,6 +89,10 @@ const AppNavigation = () => {
                     {roles&&roles.admin && (<Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/author/admin">
                             Users
                         </Link>)}
+
+                    {roles&&roles.comments && (<Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/comments">
+                        Comments
+                    </Link>)}
 
 
                     <Link className="block md:inline text-gray-400 hover:text-red-600 transition-all duration-300 py-2" href="/youtube">

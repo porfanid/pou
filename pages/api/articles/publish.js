@@ -69,6 +69,9 @@ async function handler(req, res) {
 export default async function wrappedHandler(req, res) {
     try {
         await withMiddleware(verifyIdToken)(req, res);
+        if (req.authError) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
         return await handler(req, res);
     } catch (error) {
         console.error(error);
