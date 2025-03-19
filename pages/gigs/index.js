@@ -8,7 +8,7 @@ export default function GigsPage() {
     const [gigs, setGigs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [admin, setIsAdmin] = useState(false);
-    const { roles } = useAuth();
+    const { user, roles } = useAuth();
 
     useEffect(() => {
         setIsAdmin(roles && roles.gigs);
@@ -32,6 +32,31 @@ export default function GigsPage() {
 
         fetchGigs();
     }, [roles]);
+
+    const handleDelete = async (date) => {
+        if (confirm('Are you sure you want to delete this gig?')) {
+            if(!user){
+                console.error('Unauthorized: Unknown User');
+                return;
+            }
+            try {
+                const response = await fetch(`/api/gigs/${date}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${user.idToken}`, // Replace `user.token` with the actual token
+                    },
+                });
+
+                if (response.ok) {
+                    setGigs(gigs.filter(gig => gig.date !== date));
+                } else {
+                    console.error('Failed to delete gig');
+                }
+            } catch (error) {
+                console.error('Error deleting gig:', error);
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12 px-4">
@@ -82,6 +107,15 @@ export default function GigsPage() {
                                         >
                                             View Gig
                                         </Link>
+
+                                        {admin && (
+                                            <button
+                                                onClick={() => handleDelete(gig.date)}
+                                                className="inline-block px-6 py-2 mt-2 border-2 border-red-600 text-red-600 font-semibold uppercase text-xs tracking-widest rounded hover:bg-red-600 hover:text-white transition-all duration-300"
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
