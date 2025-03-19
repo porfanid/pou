@@ -35,6 +35,7 @@ export const verifyIdToken = async (req, res, next) => {
             userRoles.isTranslator = !!user.customClaims.roles.translationSystem;
             userRoles.isLeader = !!user.customClaims.roles.authorLeader;
             userRoles.isGigAdmin = !!user.customClaims.roles.gigs;
+            userRoles.isGalleryAdmin = !!user.customClaims.roles.galleryAdmin;
         }
         req.user = {user, roles: userRoles};
         next();
