@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { database, storage } from "../../firebase/config";
-import { child, get, push, ref, remove, update } from "firebase/database";
+import { child, get, push, ref, remove, update, onValue } from "firebase/database";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { useAuth } from "../../context/AuthContext";
 
@@ -95,30 +95,84 @@ export default function ArtGallery() {
     };
 
     useEffect(() => {
-        const loadData = async () => {
+
+        const processGalleryData = async (data) => {
+            if (!data) return [];
+
+            // Remove placeholder if it exists
+            if (data.placeholder) {
+                delete data.placeholder;
+            }
+
+            const dataPromises = Object.keys(data).map(async (key) => {
+                const d = data[key];
+                const userData = await getUserData(d.title);
+                let downloadLink;
+                try {
+                    const r = storageRef(storage, d.image);
+                    downloadLink = await getDownloadURL(r);
+                    d.storageRef = d.image;
+                } catch (e) {
+                    console.log(e);
+                    downloadLink = d.image;
+                }
+                return {
+                    ...d,
+                    title: userData.name,
+                    username: d.title,
+                    id: key,
+                    userImage: userData.wantToShow ? await getDownloadURL(storageRef(storage, `profile_images/${d.title}`)) : null,
+                    wantToShow: userData.wantToShow,
+                    image: downloadLink
+                };
+            });
+
+            return await Promise.all(dataPromises);
+        };
+        let uploadedUnsubscribe = () => {};
+        let reviewUnsubscribe = () => {};
+
+        const setupListeners = async () => {
             setIsLoading(true);
+
             if (!roles) {
                 return;
             }
 
             setIsGalleryAdmin(roles.galleryAdmin);
 
-            try {
-                const uploadedRef = ref(database, '/gallery/uploaded');
-                await fetchGalleryImages(uploadedRef, setGalleryItems);
-
-                if (roles.galleryAdmin) {
-                    const reviewRef = ref(database, '/gallery/review');
-                    await fetchGalleryImages(reviewRef, setReviewItems);
-                }
-            } catch (error) {
-                console.error("Error loading gallery data:", error);
-            } finally {
+            // Real-time listener for uploaded gallery items
+            const uploadedRef = ref(database, '/gallery/uploaded');
+            uploadedUnsubscribe = onValue(uploadedRef, async (snapshot) => {
+                const data = snapshot.val();
+                const processedData = await processGalleryData(data);
+                setGalleryItems(processedData);
                 setIsLoading(false);
+            }, (error) => {
+                console.error("Error getting uploaded gallery items:", error);
+                setIsLoading(false);
+            });
+
+            // Real-time listener for review items if admin
+            if (roles.galleryAdmin) {
+                const reviewRef = ref(database, '/gallery/review');
+                reviewUnsubscribe = onValue(reviewRef, async (snapshot) => {
+                    const data = snapshot.val();
+                    const processedData = await processGalleryData(data);
+                    setReviewItems(processedData);
+                }, (error) => {
+                    console.error("Error getting review items:", error);
+                });
             }
         };
 
-        loadData();
+        setupListeners();
+
+        // Cleanup listeners on unmount
+        return () => {
+            uploadedUnsubscribe();
+            reviewUnsubscribe();
+        };
     }, [roles]);
 
     if (isLoading) {
