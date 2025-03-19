@@ -11,7 +11,7 @@ export default function GigsPage() {
     const { roles } = useAuth();
 
     useEffect(() => {
-        setIsAdmin(roles.gigs);
+        setIsAdmin(roles&&roles.gigs);
 
         // Fetch gigs data
         const fetchGigs = async () => {
@@ -35,7 +35,7 @@ export default function GigsPage() {
     }, [roles]);
 
     return (
-        <>
+        <div className={"mt-lg-5"}>
             {admin && (
                 <section className="container flex justify-center">
                     <UploadGig />
@@ -81,6 +81,6 @@ export default function GigsPage() {
                     )}
                 </div>
             </section>
-        </>
+        </div>
     );
 }

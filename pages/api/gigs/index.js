@@ -22,7 +22,8 @@ export default async function handler(req, res) {
             Object.keys(data).map(async (key) => {
                 let thumbnailURL = null;
                 try {
-                    const thumbnailRef = storage.file(`gigs/${key}/${data[key].thumbnail}`);
+
+                    const thumbnailRef = storage.file(`gigs/${key}/${data[key].thumbnail.replace(/(\.[\w\d_-]+)$/i, '_800x600$1')}`);
                     thumbnailURL = await thumbnailRef.getSignedUrl(
                         { action: 'read', expires: Date.now() + 1000 * 60 * 60 * 24 } // 24 hours
                     )
