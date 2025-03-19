@@ -26,6 +26,7 @@ const AdminSystem = () => {
         comments: "comments",
         "Gallery Admin": "galleryAdmin",
         Translator: "translationSystem"
+        "Gigs": "gigs",
     };
 
     useEffect(() => {

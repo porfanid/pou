@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
 
     // Handle auth state changes and fetch user data
     useEffect(() => {
+        let unsubscribeUser = () => {};
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser && firebaseUser.emailVerified) {
                 setUserAuth(firebaseUser);
@@ -59,7 +60,6 @@ export const AuthProvider = ({ children }) => {
                     const userExistsInDb = await checkIfReferenceExists(userPath);
 
                     let userData;
-                    let unsubscribeUser = () => {};
 
                     if (!userExistsInDb) {
                         userData = {
@@ -92,21 +92,20 @@ export const AuthProvider = ({ children }) => {
                             }
                         });
                     }
-
-                    setLoading(false);
-                    return () => unsubscribeUser();
                 } catch (error) {
                     console.error("Error handling authentication:", error);
-                    setLoading(false);
                 }
             } else {
                 setUser(null);
                 setRoles(null);
                 setNotifications([]);
-                setLoading(false);
             }
         });
-        return () => unsubscribe();
+        setLoading(false);
+        return () => {
+            unsubscribe();
+            unsubscribeUser();
+        };
     }, []);
 
     // Fetch user notifications
