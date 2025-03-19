@@ -46,7 +46,7 @@
       },
       "review": {
         ".read": "auth != null && auth.token.roles.galleryAdmin === true",
-        ".write": "auth != null && auth.token.roles.galleryAdmin === true"
+        ".write": "auth != null"
       }
     },
     ".read": false,

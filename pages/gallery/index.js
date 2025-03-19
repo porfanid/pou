@@ -316,8 +316,3 @@ export default function ArtGallery() {
         </div>
     );
 }
-
-// Add this to your global CSS file or within a style tag in your _app.js
-/*
-
-*/
