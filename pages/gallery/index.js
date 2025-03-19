@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth, database, storage } from "../../firebase/config";
-import { child, get, onValue, push, ref, remove, set, update } from "firebase/database";
+import { database, storage } from "../../firebase/config";
+import { child, get, push, ref, remove, update } from "firebase/database";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { useAuth } from "../../context/AuthContext";
 
@@ -12,7 +12,7 @@ export default function ArtGallery() {
     const [reviewItems, setReviewItems] = useState([]);
     const [isGalleryAdmin, setIsGalleryAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const { user, roles } = useAuth();
+    const {roles } = useAuth();
 
     const getUserData = async (username) => {
         const displayNameRef = ref(database, `users/${username}/displayName`);
@@ -160,10 +160,6 @@ export default function ArtGallery() {
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(10px); }
                     to { opacity: 1; transform: translateY(0); }
-                }
-            
-                .animate-enter {
-                    animation: fadeIn 0.5s ease-in-out;
                 }
             `}</style>
             <div className="container mx-auto px-4 py-8">
