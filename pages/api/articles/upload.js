@@ -46,7 +46,10 @@ async function handler(req, res) {
             const [title] = fields.title;
             const [details] = fields.details;
             const [articleContent] = fields.content ;
-            const [category] = fields.category;
+            let [category] = fields.category || ['Unknown'];
+            if (!category || category.trim() === '') {
+                category = 'Unknown';
+            }
             const [language] = fields.lang;
             const socials = JSON.parse(fields.socials[0]);
             const [uid] = fields.sub;

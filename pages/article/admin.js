@@ -88,20 +88,29 @@ const AdminPublishSystem = () => {
             if (!regularResponse.ok) throw new Error('Failed to fetch regular files');
             const regularData = await regularResponse.json();
             setFiles(setSlug(regularData.files) || []);
-
+        } catch (err) {
+            setError(`Error fetching Upload author files: ${err.message}`);
+            console.log(err)
+        }
+        try{
             // Fetch early releases
             const earlyResponse = await fetch('/api/articles/list?type=early');
             if (!earlyResponse.ok) throw new Error('Failed to fetch early releases');
             const earlyData = await earlyResponse.json();
             setEarlyReleases(setSlug(earlyData.files) || []);
-
+        } catch (err) {
+            setError(`Error fetching published early released files: ${err.message}`);
+            console.log(err)
+        }
+        try{
             // F`etch published files
             const publishedResponse = await fetch('/api/articles/list?type=published');
             if (!publishedResponse.ok) throw new Error('Failed to fetch published files');
             const publishedData = await publishedResponse.json();
             setPublishedFiles(setSlug(publishedData.files) || []);
         } catch (err) {
-            setError(`Error fetching files: ${err.message}`);
+            setError(`Error fetching published files: ${err.message}`);
+            console.log(err)
         }
     };
 
